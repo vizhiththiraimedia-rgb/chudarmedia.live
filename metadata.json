@@ -1,0 +1,6 @@
+{
+  "name": "Chudar Media – Tamil Digital News Platform",
+  "description": "CHUDAR MEDIA (சுடர் மீடியா) is a premier digital Tamil news portal delivering verified breaking news, politics, world affairs, economy, and analysis for the global Tamil community.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

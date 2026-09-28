@@ -1,0 +1,57 @@
+@import "tailwindcss";
+
+@layer base {
+  body {
+    font-family: 'Noto Sans Tamil', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+    color: #202124;
+    background-color: #FFFFFF;
+  }
+
+  h1, h2, h3, .font-serif-tamil {
+    font-family: 'Noto Serif Tamil', 'Cinzel', serif;
+  }
+
+  .font-display {
+    font-family: 'Cinzel', 'Noto Serif Tamil', serif;
+  }
+}
+
+/* Custom horizontal ticker scroll */
+@keyframes ticker {
+  0% { transform: translate3d(0, 0, 0); }
+  100% { transform: translate3d(-50%, 0, 0); }
+}
+
+.animate-ticker {
+  display: inline-flex;
+  white-space: nowrap;
+  animation: ticker 40s linear infinite;
+}
+
+.animate-ticker:hover {
+  animation-play-state: paused;
+}
+
+/* Clean print styling for news articles */
+@media print {
+  header, footer, .no-print, .ad-banner, .admin-controls, .breaking-ticker {
+    display: none !important;
+  }
+  body {
+    background: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 12pt;
+    line-height: 1.6;
+  }
+  .article-container {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  a {
+    text-decoration: underline;
+    color: #000000 !important;
+  }
+}
+
