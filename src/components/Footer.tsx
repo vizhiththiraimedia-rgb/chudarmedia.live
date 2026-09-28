@@ -118,17 +118,6 @@ export const Footer: React.FC<FooterProps> = ({
                   தொடர்புகளுக்கு (Contact)
                 </button>
               </li>
-              {/* Discreet Editorial Staff Login */}
-              <li className="pt-2 border-t border-neutral-800">
-                <button
-                  onClick={onOpenAdminLogin}
-                  className="text-neutral-500 hover:text-amber-400 flex items-center gap-1.5 transition-colors cursor-pointer text-[11px]"
-                  title="Staff Portal Login"
-                >
-                  <Lock className="w-3 h-3 text-neutral-500" />
-                  <span>ஆசிரியர் உள்நுழைவு (Staff Login)</span>
-                </button>
-              </li>
             </ul>
 
             {/* Social channels */}
@@ -181,7 +170,9 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Tier */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-            <span>© {new Date().getFullYear()} CHUDAR MEDIA CINEMA. All rights reserved.</span>
+            <span onDoubleClick={onOpenAdminLogin} className="select-none cursor-default">
+              © {new Date().getFullYear()} CHUDAR MEDIA CINEMA. All rights reserved.
+            </span>
             <span className="hidden sm:inline" aria-hidden="true">·</span>
             <span>பிரதம ஆசிரியர்: {siteSettings.editorInChief}</span>
           </div>

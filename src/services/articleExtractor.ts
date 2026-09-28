@@ -88,8 +88,8 @@ export interface LiveRssItem {
 // Reliable proxy endpoints with full-stack backend priority followed by public fallbacks
 const PROXY_BUILDERS = [
   (url: string) => `/api/proxy?url=${encodeURIComponent(url)}`,
-  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://corsproxy.io/?url=${encodeURIComponent(url)}`,
+  (url: string) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
   (url: string) => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(url)}`,
   (url: string) => url // Direct fetch fallback
 ];
@@ -117,6 +117,10 @@ export async function fetchViaProxy(targetUrl: string, timeoutMs: number = 10000
 
       if (response.ok) {
         const text = await response.text();
+        // Reject if it returned Chudar Media's own SPA bundle
+        if (text.includes('id="root"') || (text.includes('CHUDAR MEDIA') && text.includes('premier digital Tamil news'))) {
+          continue;
+        }
         if (text && text.length > 200) {
           return text;
         }
@@ -134,7 +138,9 @@ export async function fetchViaProxy(targetUrl: string, timeoutMs: number = 10000
     if (res.ok) {
       const data = await res.json();
       if (data && data.contents && data.contents.length > 200) {
-        return data.contents;
+        if (!data.contents.includes('id="root"')) {
+          return data.contents;
+        }
       }
     }
   } catch (err) {
@@ -219,6 +225,14 @@ export function extractArticleFromHtml(html: string, originalUrl: string): Extra
     // Remove site suffixes like " | Cineulagam", " - BBC News தமிழ்", etc.
     .replace(/\s*[-|–]\s*(Cineulagam|BBC News தமிழ்|Dinamalar|Dinamani|Behindwoods|Vikatan|Oneindia).*$/i, '')
     .trim();
+
+  // Guard: if self-referencing SPA shell was returned
+  if (
+    !originalUrl.includes('chudarmedia') &&
+    (title.includes('CHUDAR MEDIA') || title.includes('சுடர் மீடியா') && title.includes('உண்மையின் ஒளி'))
+  ) {
+    throw new Error('Retrieved SPA shell instead of target news page.');
+  }
 
   // 2. EXTRACT SUMMARY / DESCRIPTION
   let summary = '';
@@ -426,10 +440,11 @@ export function extractArticleFromHtml(html: string, originalUrl: string): Extra
 export async function fetchFullNewsArticle(url: string): Promise<ExtractedArticle> {
   const cleanUrl = url.trim();
 
-  // 1. Try our full-stack server backend endpoint first (highest reliability, bypasses CORS & scraping protection)
+  // 1. Try our server backend endpoint first (highest reliability, bypasses CORS & scraping protection)
   try {
     const res = await fetch(`/api/fetch-article?url=${encodeURIComponent(cleanUrl)}`);
-    if (res.ok) {
+    const cType = res.headers.get('content-type') || '';
+    if (res.ok && cType.includes('application/json')) {
       const data = await res.json();
       if (data && data.success && data.article && data.article.title) {
         return data.article;

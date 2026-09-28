@@ -135,19 +135,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Globe className="w-3.5 h-3.5 text-[#C8102E]" />
               <span>{language === 'ta' ? 'English' : 'தமிழ்'}</span>
             </button>
-
-            {/* Admin Login Quick Link */}
-            {onOpenAdminLogin && (
-              <button
-                onClick={onOpenAdminLogin}
-                className="flex items-center gap-1.5 px-2.5 py-0.5 rounded text-amber-300 hover:text-white bg-neutral-800/90 hover:bg-neutral-800 border border-amber-500/30 transition-colors cursor-pointer text-xs font-semibold"
-                title="Admin & Editorial Login"
-              >
-                <Lock className="w-3 h-3 text-[#C8102E]" />
-                <span className="hidden sm:inline">நிர்வாகி / </span>
-                <span>Admin Login</span>
-              </button>
-            )}
           </div>
         </div>
       </div>

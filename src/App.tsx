@@ -105,12 +105,28 @@ export default function App() {
     setIsReady(true);
 
     // Check if URL has ?admin=true or hash
-    if (window.location.search.includes('admin=true') || window.location.hash === '#admin') {
+    const query = window.location.search;
+    const hash = window.location.hash;
+    if (query.includes('admin=true') || hash === '#admin') {
       setViewMode('admin');
+    } else if (query.includes('admin=login') || query.includes('login=true') || hash === '#login') {
+      setIsAdminLoginOpen(true);
     }
 
+    // Secret Keyboard Shortcut: Ctrl + Shift + A (or Cmd + Shift + A on Mac)
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+        e.preventDefault();
+        setIsAdminLoginOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+
     const unsubscribe = subscribeToStore(loadData);
-    return () => unsubscribe();
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      unsubscribe();
+    };
   }, []);
 
   if (!isReady || !currentUser || !siteSettings || !liveStreamConfig) {
