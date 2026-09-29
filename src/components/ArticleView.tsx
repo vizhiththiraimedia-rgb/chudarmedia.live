@@ -99,10 +99,40 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
     }
   };
 
+  const directArticleUrl = `${window.location.origin}${window.location.pathname}?article=${article.id}`;
+  const shareUrl = encodeURIComponent(directArticleUrl);
+  const shareTitle = encodeURIComponent(article.title);
+
   const handleCopyLink = () => {
-    navigator.clipboard.writeText(window.location.href);
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(directArticleUrl);
+    } else {
+      // Fallback
+      const textArea = document.createElement('textarea');
+      textArea.value = directArticleUrl;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+    }
     setCopiedLink(true);
     setTimeout(() => setCopiedLink(false), 2500);
+  };
+
+  const handleNativeShare = async () => {
+    if (navigator.share) {
+      try {
+        await navigator.share({
+          title: article.title,
+          text: article.summary,
+          url: directArticleUrl
+        });
+      } catch {
+        handleCopyLink();
+      }
+    } else {
+      handleCopyLink();
+    }
   };
 
   const handlePrint = () => {
@@ -165,9 +195,6 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
       : fontSize === 'large'
       ? 'text-base sm:text-lg leading-relaxed'
       : 'text-sm sm:text-base leading-relaxed';
-
-  const shareUrl = encodeURIComponent(window.location.href);
-  const shareTitle = encodeURIComponent(article.title);
 
   return (
     <div className="article-container max-w-4xl mx-auto px-4 sm:px-6 py-6">
@@ -470,6 +497,85 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
           </div>
         );
       })()}
+
+      {/* Dedicated Post Share Box with Direct Permanent Link */}
+      <div className="no-print my-8 p-5 bg-neutral-900 text-white rounded-lg shadow-sm border border-neutral-800">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+          <div>
+            <span className="text-amber-400 text-xs font-bold uppercase tracking-wider block">
+              {language === 'ta' ? 'செய்தியைப் பகிர்க' : 'SHARE THIS ARTICLE'}
+            </span>
+            <h4 className="text-sm font-bold text-white mt-0.5">
+              {language === 'ta'
+                ? 'உங்கள் நண்பர்கள் & குடும்பத்தினருடன் இந்த செய்தியைப் பகிருங்கள்'
+                : 'Share this verified story with friends and family'}
+            </h4>
+          </div>
+
+          {/* Direct WhatsApp Big Button */}
+          <a
+            href={`https://api.whatsapp.com/send?text=${shareTitle}%0A${shareUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#25D366] hover:bg-[#20ba5a] text-white font-bold text-xs rounded-md shadow-sm transition-transform active:scale-95 shrink-0"
+          >
+            <span className="text-sm">💬</span>
+            <span>WhatsApp-ல் பகிர்க</span>
+          </a>
+        </div>
+
+        {/* Permanent URL display and 1-tap Copy */}
+        <div className="bg-neutral-950 p-2.5 rounded-md border border-neutral-800 flex items-center justify-between gap-2 mb-3">
+          <div className="font-mono text-xs text-neutral-300 truncate select-all flex-1">
+            {directArticleUrl}
+          </div>
+          <button
+            onClick={handleCopyLink}
+            className="px-3 py-1.5 bg-[#C8102E] hover:bg-[#a50d25] text-white text-xs font-bold rounded flex items-center gap-1.5 shrink-0 cursor-pointer transition-colors"
+          >
+            {copiedLink ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+            <span>{copiedLink ? 'நகலெடுக்கப்பட்டது!' : 'இணைப்பை நகலெடு'}</span>
+          </button>
+        </div>
+
+        {/* Social Share Grid */}
+        <div className="flex flex-wrap items-center gap-2 pt-2 border-t border-neutral-800">
+          <a
+            href={`https://www.facebook.com/sharer/sharer.php?u=${shareUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-[#1877F2] hover:opacity-90 text-white text-xs font-bold rounded flex items-center gap-1"
+          >
+            <span>Facebook</span>
+          </a>
+
+          <a
+            href={`https://t.me/share/url?url=${shareUrl}&text=${shareTitle}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-[#24A1DE] hover:opacity-90 text-white text-xs font-bold rounded flex items-center gap-1"
+          >
+            <span>Telegram</span>
+          </a>
+
+          <a
+            href={`https://twitter.com/intent/tweet?text=${shareTitle}&url=${shareUrl}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-white text-xs font-bold rounded border border-neutral-700 flex items-center gap-1"
+          >
+            <span>X (Twitter)</span>
+          </a>
+
+          <button
+            onClick={handleNativeShare}
+            className="px-3 py-1.5 bg-neutral-800 hover:bg-neutral-700 text-neutral-200 text-xs font-bold rounded border border-neutral-700 flex items-center gap-1 cursor-pointer"
+          >
+            <Share2 className="w-3.5 h-3.5" />
+            <span>{language === 'ta' ? 'மேலும் பகிர' : 'More...'}</span>
+          </button>
+        </div>
+      </div>
 
       {/* Inline Advertisement Banner */}
       {inlineAd && (

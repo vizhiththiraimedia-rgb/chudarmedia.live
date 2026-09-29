@@ -100,19 +100,97 @@ export default function App() {
     setVideoTrailers(getVideoTrailers());
   };
 
+  // Parse URL and navigate to the requested post, category, or view
+  const syncRouteFromUrl = (articlesList?: Article[]) => {
+    const list = articlesList || getArticles();
+    const searchParams = new URLSearchParams(window.location.search);
+    const hash = window.location.hash;
+    const pathname = window.location.pathname;
+
+    // 1. Check article parameter: ?article=... or ?id=... or ?p=... or #article=...
+    let articleId =
+      searchParams.get('article') ||
+      searchParams.get('id') ||
+      searchParams.get('post') ||
+      searchParams.get('p');
+
+    if (!articleId && hash.startsWith('#article=')) {
+      articleId = hash.replace('#article=', '');
+    } else if (!articleId && hash.startsWith('#/article/')) {
+      articleId = hash.replace('#/article/', '');
+    } else if (!articleId && pathname.includes('/article/')) {
+      const parts = pathname.split('/article/');
+      if (parts[1]) articleId = parts[1].split('/')[0];
+    }
+
+    if (articleId && list.length > 0) {
+      const matched = list.find((a) => a.id === articleId || a.slug === articleId);
+      if (matched) {
+        setCurrentArticle(matched);
+        setViewMode('article');
+        return;
+      }
+    }
+
+    // 2. Check Live TV
+    if (searchParams.get('view') === 'livetv' || hash === '#livetv') {
+      setViewMode('livetv');
+      setCurrentArticle(null);
+      return;
+    }
+
+    // 3. Check Admin
+    if (searchParams.get('admin') === 'true' || hash === '#admin') {
+      setViewMode('admin');
+      return;
+    }
+
+    // 4. Check Static page
+    const pageParam = searchParams.get('page');
+    if (pageParam && ['about', 'editorial-policy', 'advertise', 'contact', 'privacy', 'terms'].includes(pageParam)) {
+      setStaticPageType(pageParam as any);
+      setViewMode('static');
+      setCurrentArticle(null);
+      return;
+    }
+
+    // 5. Check Category
+    const catId = searchParams.get('category') || searchParams.get('cat');
+    if (catId) {
+      setActiveCategoryId(catId);
+      setViewMode('home');
+      setCurrentArticle(null);
+      return;
+    }
+
+    // Default to home if nothing specified
+    if (!articleId) {
+      setViewMode('home');
+      setCurrentArticle(null);
+    }
+  };
+
   useEffect(() => {
     initializeStore();
+    const initialArticles = getArticles();
     loadData();
     setIsReady(true);
 
-    // Check if URL has ?admin=true or hash
+    // Initial URL sync for shared links
+    syncRouteFromUrl(initialArticles);
+
+    // Check if URL has ?admin=login or hash
     const query = window.location.search;
     const hash = window.location.hash;
-    if (query.includes('admin=true') || hash === '#admin') {
-      setViewMode('admin');
-    } else if (query.includes('admin=login') || query.includes('login=true') || hash === '#login') {
+    if (query.includes('admin=login') || query.includes('login=true') || hash === '#login') {
       setIsAdminLoginOpen(true);
     }
+
+    // Handle browser Back / Forward buttons
+    const handlePopState = () => {
+      syncRouteFromUrl();
+    };
+    window.addEventListener('popstate', handlePopState);
 
     // Secret Keyboard Shortcut: Ctrl + Shift + A (or Cmd + Shift + A on Mac)
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -123,8 +201,12 @@ export default function App() {
     };
     window.addEventListener('keydown', handleKeyDown);
 
-    const unsubscribe = subscribeToStore(loadData);
+    const unsubscribe = subscribeToStore(() => {
+      loadData();
+    });
+
     return () => {
+      window.removeEventListener('popstate', handlePopState);
       window.removeEventListener('keydown', handleKeyDown);
       unsubscribe();
     };
@@ -143,35 +225,76 @@ export default function App() {
     );
   }
 
-  // Navigation Actions
-  const handleSelectArticle = (article: Article) => {
+  // Navigation Actions with URL Update for Sharable Links
+  const handleSelectArticle = (article: Article, pushHistory: boolean = true) => {
     setCurrentArticle(article);
     setViewMode('article');
+    if (pushHistory) {
+      const url = new URL(window.location.href);
+      url.searchParams.set('article', article.id);
+      url.searchParams.delete('category');
+      url.searchParams.delete('view');
+      url.searchParams.delete('page');
+      window.history.pushState({ view: 'article', articleId: article.id }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleSelectArticleById = (articleId: string) => {
-    const art = articles.find((a) => a.id === articleId);
+  const handleSelectArticleById = (articleId: string, pushHistory: boolean = true) => {
+    const art = articles.find((a) => a.id === articleId) || getArticles().find((a) => a.id === articleId);
     if (art) {
-      handleSelectArticle(art);
+      handleSelectArticle(art, pushHistory);
     }
   };
 
-  const handleSelectCategory = (catId: string) => {
+  const handleSelectCategory = (catId: string, pushHistory: boolean = true) => {
     setActiveCategoryId(catId);
     setViewMode('home');
+    setCurrentArticle(null);
+    if (pushHistory) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('article');
+      url.searchParams.delete('id');
+      url.searchParams.delete('view');
+      url.searchParams.delete('page');
+      if (catId === 'all') {
+        url.searchParams.delete('category');
+        window.history.pushState({ view: 'home', categoryId: 'all' }, '', url.pathname);
+      } else {
+        url.searchParams.set('category', catId);
+        window.history.pushState({ view: 'home', categoryId: catId }, '', url.toString());
+      }
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleGoHome = () => {
+  const handleGoHome = (pushHistory: boolean = true) => {
     setViewMode('home');
     setActiveCategoryId('all');
     setCurrentArticle(null);
+    if (pushHistory) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('article');
+      url.searchParams.delete('id');
+      url.searchParams.delete('category');
+      url.searchParams.delete('view');
+      url.searchParams.delete('page');
+      window.history.pushState({ view: 'home' }, '', url.pathname);
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  const handleOpenLiveTv = () => {
+  const handleOpenLiveTv = (pushHistory: boolean = true) => {
     setViewMode('livetv');
+    setCurrentArticle(null);
+    if (pushHistory) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('article');
+      url.searchParams.delete('category');
+      url.searchParams.delete('page');
+      url.searchParams.set('view', 'livetv');
+      window.history.pushState({ view: 'livetv' }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -188,10 +311,20 @@ export default function App() {
   };
 
   const handleOpenStaticPage = (
-    page: 'about' | 'editorial-policy' | 'advertise' | 'contact' | 'privacy' | 'terms'
+    page: 'about' | 'editorial-policy' | 'advertise' | 'contact' | 'privacy' | 'terms',
+    pushHistory: boolean = true
   ) => {
     setStaticPageType(page);
     setViewMode('static');
+    setCurrentArticle(null);
+    if (pushHistory) {
+      const url = new URL(window.location.href);
+      url.searchParams.delete('article');
+      url.searchParams.delete('category');
+      url.searchParams.delete('view');
+      url.searchParams.set('page', page);
+      window.history.pushState({ view: 'static', page }, '', url.toString());
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 

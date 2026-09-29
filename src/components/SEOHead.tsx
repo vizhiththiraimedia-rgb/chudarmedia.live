@@ -83,6 +83,55 @@ export const SEOHead: React.FC<SEOHeadProps> = ({
     let ogDesc = document.querySelector('meta[property="og:description"]');
     if (ogDesc) ogDesc.setAttribute('content', description);
 
+    // Update OpenGraph Image & URL
+    if (pageType === 'article' && currentArticle) {
+      const articleUrl = `${window.location.origin}${window.location.pathname}?article=${currentArticle.id}`;
+      
+      let ogUrl = document.querySelector('meta[property="og:url"]');
+      if (!ogUrl) {
+        ogUrl = document.createElement('meta');
+        ogUrl.setAttribute('property', 'og:url');
+        document.head.appendChild(ogUrl);
+      }
+      ogUrl.setAttribute('content', articleUrl);
+
+      let ogImg = document.querySelector('meta[property="og:image"]');
+      if (!ogImg) {
+        ogImg = document.createElement('meta');
+        ogImg.setAttribute('property', 'og:image');
+        document.head.appendChild(ogImg);
+      }
+      ogImg.setAttribute('content', currentArticle.featuredImage);
+
+      // Twitter Cards
+      let twTitle = document.querySelector('meta[name="twitter:title"]');
+      if (twTitle) twTitle.setAttribute('content', title);
+      let twDesc = document.querySelector('meta[name="twitter:description"]');
+      if (twDesc) twDesc.setAttribute('content', description);
+
+      let twImg = document.querySelector('meta[name="twitter:image"]');
+      if (!twImg) {
+        twImg = document.createElement('meta');
+        twImg.setAttribute('name', 'twitter:image');
+        document.head.appendChild(twImg);
+      }
+      twImg.setAttribute('content', currentArticle.featuredImage);
+
+      // Canonical Link
+      let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (!canonicalLink) {
+        canonicalLink = document.createElement('link');
+        canonicalLink.setAttribute('rel', 'canonical');
+        document.head.appendChild(canonicalLink);
+      }
+      canonicalLink.setAttribute('href', articleUrl);
+    } else {
+      let ogUrl = document.querySelector('meta[property="og:url"]');
+      if (ogUrl) ogUrl.setAttribute('content', window.location.origin);
+      let canonicalLink = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
+      if (canonicalLink) canonicalLink.setAttribute('href', window.location.origin);
+    }
+
     // Inject or update JSON-LD Schema
     const scriptId = 'chudar-schema-jsonld';
     let scriptTag = document.getElementById(scriptId) as HTMLScriptElement | null;
