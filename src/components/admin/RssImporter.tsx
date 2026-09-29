@@ -92,25 +92,27 @@ export const RssImporter: React.FC<RssImporterProps> = ({
     setExtractedData(null);
     setFetchStatusStep('இணையதளத்துடன் இணைக்கப்படுகிறது (Connecting to source)...');
 
-    // Special Fast-Path for Facebook Posts & Videos (Handles Chilli Chips Official, Reels, Videos)
-    if (targetUrl.includes('facebook.com') || targetUrl.includes('fb.watch')) {
-      setFetchStatusStep('முகநூல் வீடியோ மற்றும் பதிவு தயார் செய்யப்படுகிறது (Preparing Facebook Post & Video Embed)...');
-      setTimeout(() => {
-        const fbArticle = extractFacebookPostOrVideo(targetUrl, fbCaption);
-        setExtractedData(fbArticle);
-        setEditTitle(fbArticle.title);
-        setEditSummary(fbArticle.summary);
-        setEditContent(fbArticle.content);
-        setEditImage(fbArticle.image);
-        setFetchStatusStep('முகநூல் பதிவு வெற்றிகரமாக பெறப்பட்டது! (Facebook Post & Video Embed Ready)');
-        setIsFetchingUrl(false);
-      }, 500);
-      return;
-    }
-
     try {
       setFetchStatusStep('உண்மையான செய்தி மற்றும் பத்திகள் பிரித்தெடுக்கப்படுகின்றன (Extracting full article & paragraphs)...');
-      const article = await fetchFullNewsArticle(targetUrl);
+      let article = await fetchFullNewsArticle(targetUrl);
+
+      // If user typed custom text in fbCaption (and it's not a URL), use as custom title override
+      const cleanFbCaption = fbCaption.trim();
+      if (
+        cleanFbCaption &&
+        !cleanFbCaption.startsWith('http://') &&
+        !cleanFbCaption.startsWith('https://') &&
+        !cleanFbCaption.includes('facebook.com')
+      ) {
+        article = {
+          ...article,
+          title: cleanFbCaption,
+          subtitle: cleanFbCaption.slice(0, 140)
+        };
+      } else if (cleanFbCaption.startsWith('http') || cleanFbCaption.includes('facebook.com')) {
+        // Clear accidentally pasted URL from caption input
+        setFbCaption('');
+      }
 
       setExtractedData(article);
       setEditTitle(article.title);
@@ -120,10 +122,20 @@ export const RssImporter: React.FC<RssImporterProps> = ({
       setFetchStatusStep('முழு செய்தியும் வெற்றிகரமாக பெறப்பட்டது! (Extracted successfully)');
     } catch (err: any) {
       console.error('Extraction error:', err);
-      setFetchError(
-        err?.message ||
-          'Failed to extract article content. Please verify the URL or try another news source.'
-      );
+      if (targetUrl.includes('facebook.com') || targetUrl.includes('fb.watch')) {
+        const fallbackFb = extractFacebookPostOrVideo(targetUrl);
+        setExtractedData(fallbackFb);
+        setEditTitle(fallbackFb.title);
+        setEditSummary(fallbackFb.summary);
+        setEditContent(fallbackFb.content);
+        setEditImage(fallbackFb.image);
+        setFetchStatusStep('முகநூல் பதிவு தயார் செய்யப்பட்டது! (Facebook Post Ready)');
+      } else {
+        setFetchError(
+          err?.message ||
+            'Failed to extract article content. Please verify the URL or try another news source.'
+        );
+      }
     } finally {
       setIsFetchingUrl(false);
     }
@@ -410,14 +422,24 @@ export const RssImporter: React.FC<RssImporterProps> = ({
             {/* Optional Caption Input */}
             <div className="space-y-1">
               <label className="text-[11px] font-bold text-blue-950 flex items-center justify-between">
-                <span>Facebook தலைப்பு / குறிப்பு (விரும்பினால் மட்டும் சுருக்கமாக உள்ளிடலாம்):</span>
-                <span className="text-[10px] text-neutral-500 font-normal">காலியாகவும் விடலாம் (Optional)</span>
+                <span>மாற்றுத் தலைப்பு (விருப்பத்திற்கு மட்டும் - தேவையில்லையெனில் காலியாக விடலாம்):</span>
+                <span className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">
+                  காலியாக விட்டால் தானாகவே முகநூலிலிருந்து தலைப்பு பெறப்படும்
+                </span>
               </label>
               <input
                 type="text"
                 value={fbCaption}
-                onChange={(e) => setFbCaption(e.target.value)}
-                placeholder="எ.கா: Chilli Chips Official சிறப்பு சினிமா காணொளி அல்லது நடிகர் பேச்சு..."
+                onChange={(e) => {
+                  const val = e.target.value;
+                  // If user pasted a URL here, do not set as caption
+                  if (val.startsWith('http://') || val.startsWith('https://') || val.includes('facebook.com')) {
+                    setFbCaption('');
+                  } else {
+                    setFbCaption(val);
+                  }
+                }}
+                placeholder="விரும்பினால் புதிய தலைப்பைத் தமிழில் தட்டச்சு செய்யலாம்... (இல்லையேல் காலியாக விடவும்)"
                 className="w-full px-3 py-2 text-xs border border-blue-300 rounded bg-white focus:outline-none focus:border-blue-600 text-neutral-800"
               />
             </div>

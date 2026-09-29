@@ -97,12 +97,22 @@ app.all('/api/fetch-article', async (req: Request, res: Response) => {
 
   try {
     const cleanUrl = targetUrl.trim();
+    const isFacebook = cleanUrl.includes('facebook.com') || cleanUrl.includes('fb.watch');
+
+    const fetchHeaders = isFacebook
+      ? {
+          'User-Agent': 'facebookexternalhit/1.1 (+http://www.facebook.com/externalhit_uatext.php)',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'ta,en-US;q=0.9,en;q=0.8',
+        }
+      : BROWSER_HEADERS;
+
     const response = await fetch(cleanUrl, {
-      headers: BROWSER_HEADERS,
+      headers: fetchHeaders,
       redirect: 'follow',
     });
 
-    if (!response.ok) {
+    if (!response.ok && !isFacebook) {
       res.status(response.status).json({
         success: false,
         error: `Target website returned HTTP status ${response.status}`,
@@ -112,6 +122,119 @@ app.all('/api/fetch-article', async (req: Request, res: Response) => {
 
     const html = await response.text();
     const $ = cheerio.load(html);
+
+    // SPECIAL HANDLING FOR FACEBOOK POSTS & VIDEOS
+    if (isFacebook) {
+      const rawDesc = cleanText(
+        $('meta[name="description"]').attr('content') ||
+        $('meta[property="og:description"]').attr('content') ||
+        $('meta[name="twitter:description"]').attr('content') ||
+        ''
+      );
+
+      const rawImage =
+        $('meta[property="og:image"]').attr('content') ||
+        $('meta[property="og:image:secure_url"]').attr('content') ||
+        $('meta[name="twitter:image"]').attr('content') ||
+        '';
+
+      const docTitle = cleanText($('title').text() || '');
+
+      let pageName = 'Chilli Chips Official';
+      if (cleanUrl.toLowerCase().includes('chillichipsofficial')) {
+        pageName = 'Chilli Chips Official';
+      } else {
+        const match = cleanUrl.match(/facebook\.com\/([a-zA-Z0-9._-]+)/);
+        if (match && match[1] && !['share', 'watch', 'reel', 'videos', 'posts', 'p'].includes(match[1])) {
+          pageName = match[1];
+        }
+      }
+
+      let fbHeadline = '';
+      let fbSummary = '';
+
+      if (rawDesc) {
+        // Split on punctuation to get clean first sentence
+        const splitMatch = rawDesc.match(/^([^!.\n]+[!.\n])(.*)$/s);
+        if (splitMatch && splitMatch[1]) {
+          fbHeadline = splitMatch[1].replace(/^[\s📸🎬🔥⚡️✨🎥📷\uD800-\uDBFF\uDC00-\uDFFF\-–—]+/, '').trim();
+          fbSummary = splitMatch[2].trim();
+        } else {
+          fbHeadline = rawDesc.slice(0, 90).replace(/^[\s📸🎬🔥⚡️✨🎥📷\uD800-\uDBFF\uDC00-\uDFFF\-–—]+/, '').trim();
+          fbSummary = rawDesc;
+        }
+      }
+
+      if (!fbHeadline || fbHeadline.length < 5) {
+        fbHeadline = docTitle
+          .replace(/\s*[-–|]\s*Facebook.*$/i, '')
+          .replace(/^Chilli Chips\s*[-–]\s*/i, '')
+          .replace(/^[\s📸🎬🔥⚡️✨🎥📷\-–—]+/, '')
+          .trim();
+      }
+
+      if (!fbHeadline) {
+        fbHeadline = `${pageName} முகநூல் சிறப்பு சினிமா பதிவு`;
+      }
+
+      if (!fbSummary) {
+        fbSummary = rawDesc || `சமூக வலைத்தளமான முகநூலில் ${pageName} பக்கத்தில் வெளியாகி ரசிகர்கள் மத்தியில் பெரும் வைரலாகி வரும் சினிமா தகவல் மற்றும் புகைப்படத் தொகுப்பு.`;
+      }
+
+      const isVideoOrReel =
+        cleanUrl.includes('/videos/') ||
+        cleanUrl.includes('/reel/') ||
+        cleanUrl.includes('fb.watch') ||
+        cleanUrl.includes('/watch');
+
+      const embedType = isVideoOrReel ? 'video' : 'post';
+      const iframeSrc = `https://www.facebook.com/plugins/${embedType}.php?href=${encodeURIComponent(cleanUrl)}&show_text=true&width=500`;
+
+      const paragraphs = [
+        `தமிழ் சினிமா மற்றும் திரைத்துறை வட்டாரங்களில் பெரும் வரவேற்பைப் பெற்றுள்ள முக்கிய புகைப்படத் தொகுப்பு மற்றும் செய்தித் தகவல் <strong>${pageName}</strong> முகநூல் பக்கத்தில் வெளியிடப்பட்டுள்ளது.`,
+        rawDesc || fbSummary,
+        `திரைப்படக் குழுவினர் மற்றும் கோலிவுட் வட்டாரங்களில் பேசப்பட்டு வரும் இந்நிகழ்வு குறித்த முழுமையான விபரங்கள் மற்றும் புகைப்படங்கள் இணையதளங்களில் பெரும் வைரலாகி வருகின்றன. சுடர் மீடியா சினிமா தளத்தில் தமிழ்த் திரைப்படங்களின் பிரத்யேக தகவல்கள் தொடர்ந்து உடனுக்குடன் பதிவேற்றப்பட்டு வருகின்றன.`
+      ];
+
+      const htmlContent = `<p>${paragraphs[0]}</p>
+
+<div class="fb-post-highlight bg-neutral-100 p-4 border-l-4 border-[#C8102E] my-4 rounded-r-sm">
+  <p class="text-sm font-semibold text-neutral-800 leading-relaxed">${paragraphs[1]}</p>
+</div>
+
+<div class="fb-embed-container my-6 flex flex-col items-center justify-center p-3 bg-neutral-900 rounded-lg shadow-md border border-neutral-800">
+  <div class="w-full max-w-[500px] overflow-hidden rounded bg-black">
+    <iframe src="${iframeSrc}" width="100%" height="${isVideoOrReel ? '450' : '520'}" style="border:none;overflow:hidden;min-height:380px;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+  </div>
+  <span class="text-[11px] text-neutral-400 mt-2 block font-mono">மூலம்: ${pageName} முகநூல் பக்கம்</span>
+</div>
+
+<p>${paragraphs[2]}</p>`;
+
+      const extractedArticle = {
+        title: fbHeadline,
+        subtitle: fbSummary.slice(0, 160),
+        summary: fbSummary,
+        content: htmlContent,
+        plainContent: paragraphs.join('\n\n'),
+        paragraphs,
+        image: rawImage || 'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80',
+        imageCaption: fbHeadline,
+        source: `${pageName} (Facebook)`,
+        sourceUrl: cleanUrl,
+        author: `${pageName} / சுடர் மீடியா`,
+        publishedAt: new Date().toISOString(),
+        paragraphsCount: paragraphs.length,
+        wordCount: paragraphs.join(' ').split(/\s+/).filter(Boolean).length,
+        isRealFullArticle: true
+      };
+
+      res.json({
+        success: true,
+        article: extractedArticle,
+      });
+      return;
+    }
 
     // Strip noise, ads, scripts, nav, widgets, footers
     $(

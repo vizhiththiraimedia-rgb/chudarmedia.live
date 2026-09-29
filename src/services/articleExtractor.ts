@@ -226,15 +226,22 @@ export function extractFacebookPostOrVideo(url: string, customCaption?: string):
   }
 
   const cleanUrl = url.split('?')[0] || url;
-  const userCaption = customCaption?.trim();
+  const rawCaption = customCaption?.trim();
+  const userCaption =
+    rawCaption &&
+    !rawCaption.startsWith('http://') &&
+    !rawCaption.startsWith('https://') &&
+    !rawCaption.includes('facebook.com')
+      ? rawCaption
+      : undefined;
 
   const title = userCaption
     ? (userCaption.length > 70 ? userCaption.slice(0, 68) + '...' : userCaption)
-    : `${pageName} முகநூல் ${isVideoOrReel ? 'காணொளி & சிறப்பு சினிமா பதிவு' : 'வைரல் சினிமா பதிவு'}`;
+    : `${pageName} சிறப்பு சினிமா பதிவு — முக்கிய புகைப்படத் தொகுப்பு`;
 
   const summary = userCaption
     ? userCaption.slice(0, 160)
-    : `சமூக வலைத்தளமான முகநூலில் (Facebook) ${pageName} பக்கத்தில் வெளியாகி ரசிகர்கள் மத்தியில் பெரும் வைரலாகி வரும் சினிமா தகவல் மற்றும் காணொளித் தொகுப்பு.`;
+    : `சமூக வலைத்தளமான முகநூலில் (Facebook) ${pageName} பக்கத்தில் வெளியாகி ரசிகர்கள் மத்தியில் பெரும் வைரலாகி வரும் சினிமா தகவல் மற்றும் புகைப்படத் தொகுப்பு.`;
 
   const embedType = isVideoOrReel ? 'video' : 'post';
   const iframeSrc = `https://www.facebook.com/plugins/${embedType}.php?href=${encodeURIComponent(url)}&show_text=true&width=500`;
