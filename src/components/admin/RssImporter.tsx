@@ -28,7 +28,8 @@ import {
   ExtractedArticle,
   LiveRssItem,
   htmlToPlainText,
-  plainTextToHtml
+  plainTextToHtml,
+  extractFacebookPostOrVideo
 } from '../../services/articleExtractor';
 
 interface RssImporterProps {
@@ -54,6 +55,7 @@ export const RssImporter: React.FC<RssImporterProps> = ({
 }) => {
   // Direct URL Fetcher States
   const [fetchUrl, setFetchUrl] = useState('');
+  const [fbCaption, setFbCaption] = useState('');
   const [isFetchingUrl, setIsFetchingUrl] = useState(false);
   const [fetchError, setFetchError] = useState<string | null>(null);
   const [extractedData, setExtractedData] = useState<ExtractedArticle | null>(null);
@@ -89,6 +91,22 @@ export const RssImporter: React.FC<RssImporterProps> = ({
     setFetchError(null);
     setExtractedData(null);
     setFetchStatusStep('இணையதளத்துடன் இணைக்கப்படுகிறது (Connecting to source)...');
+
+    // Special Fast-Path for Facebook Posts & Videos (Handles Chilli Chips Official, Reels, Videos)
+    if (targetUrl.includes('facebook.com') || targetUrl.includes('fb.watch')) {
+      setFetchStatusStep('முகநூல் வீடியோ மற்றும் பதிவு தயார் செய்யப்படுகிறது (Preparing Facebook Post & Video Embed)...');
+      setTimeout(() => {
+        const fbArticle = extractFacebookPostOrVideo(targetUrl, fbCaption);
+        setExtractedData(fbArticle);
+        setEditTitle(fbArticle.title);
+        setEditSummary(fbArticle.summary);
+        setEditContent(fbArticle.content);
+        setEditImage(fbArticle.image);
+        setFetchStatusStep('முகநூல் பதிவு வெற்றிகரமாக பெறப்பட்டது! (Facebook Post & Video Embed Ready)');
+        setIsFetchingUrl(false);
+      }, 500);
+      return;
+    }
 
     try {
       setFetchStatusStep('உண்மையான செய்தி மற்றும் பத்திகள் பிரித்தெடுக்கப்படுகின்றன (Extracting full article & paragraphs)...');
@@ -367,6 +385,83 @@ export const RssImporter: React.FC<RssImporterProps> = ({
             )}
           </button>
         </form>
+
+        {/* Facebook Post & Video Dedicated Toolkit (When FB link is entered) */}
+        {(fetchUrl.includes('facebook.com') || fetchUrl.includes('fb.watch')) && (
+          <div className="mt-4 p-4 bg-blue-50 border-2 border-blue-400 rounded-md space-y-3">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold text-xs">
+                  f
+                </span>
+                <span className="font-bold text-xs text-blue-950 uppercase tracking-wide">
+                  Facebook வீடியோ & பதிவு டூல்ஸ் (FB Video & Post Toolkit)
+                </span>
+              </div>
+              <span className="text-[11px] text-blue-700 bg-white px-2 py-0.5 rounded border border-blue-200">
+                நேரடி வீடியோ இயக்கம் & ஆட்டோ-கட்டுரை தயார்
+              </span>
+            </div>
+
+            <p className="text-xs text-blue-900 leading-relaxed">
+              முகநூல் (Facebook) வீடியோக்கள் & பதிவுகளை வாசகர்கள் உங்கள் தளத்திலேயே நேரடியாகப் பார்க்கும் வகையில் அதிகாரப்பூர்வ Facebook Player உடன் சினிமா கட்டுரையாக மாற்றலாம். நீங்கள் கட்டுரை எழுதத் தேவையில்லை!
+            </p>
+
+            {/* Optional Caption Input */}
+            <div className="space-y-1">
+              <label className="text-[11px] font-bold text-blue-950 flex items-center justify-between">
+                <span>Facebook தலைப்பு / குறிப்பு (விரும்பினால் மட்டும் சுருக்கமாக உள்ளிடலாம்):</span>
+                <span className="text-[10px] text-neutral-500 font-normal">காலியாகவும் விடலாம் (Optional)</span>
+              </label>
+              <input
+                type="text"
+                value={fbCaption}
+                onChange={(e) => setFbCaption(e.target.value)}
+                placeholder="எ.கா: Chilli Chips Official சிறப்பு சினிமா காணொளி அல்லது நடிகர் பேச்சு..."
+                className="w-full px-3 py-2 text-xs border border-blue-300 rounded bg-white focus:outline-none focus:border-blue-600 text-neutral-800"
+              />
+            </div>
+
+            {/* Action Buttons: 1-Click Formulate & External Video Downloaders */}
+            <div className="flex flex-wrap items-center gap-2 pt-1">
+              <button
+                type="button"
+                onClick={() => handleFetchRealUrl()}
+                className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded flex items-center gap-1.5 shadow-xs cursor-pointer transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-amber-300" />
+                <span>தானாகவே சினிமா கட்டுரையை உருவாக்கு (Auto-Formulate Now)</span>
+              </button>
+
+              <span className="text-neutral-300">|</span>
+
+              {/* Direct Facebook Video Downloaders */}
+              <a
+                href={`https://snapsave.app/?url=${encodeURIComponent(fetchUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-white hover:bg-neutral-100 text-neutral-800 text-xs font-semibold rounded border border-neutral-300 flex items-center gap-1 shadow-2xs"
+                title="Download Facebook Video in HD via SnapSave"
+              >
+                <Download className="w-3.5 h-3.5 text-emerald-600" />
+                <span>SnapSave HD வீடியோ டவுன்லோட்</span>
+                <ExternalLink className="w-3 h-3 text-neutral-400" />
+              </a>
+
+              <a
+                href={`https://fdown.net/download.php?url=${encodeURIComponent(fetchUrl)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-3 py-2 bg-white hover:bg-neutral-100 text-neutral-800 text-xs font-semibold rounded border border-neutral-300 flex items-center gap-1 shadow-2xs"
+                title="Download Facebook Video via FDown"
+              >
+                <Download className="w-3.5 h-3.5 text-blue-600" />
+                <span>FDown டவுன்லோடர்</span>
+                <ExternalLink className="w-3 h-3 text-neutral-400" />
+              </a>
+            </div>
+          </div>
+        )}
 
         {isFetchingUrl && (
           <div className="mt-3 p-3 bg-neutral-50 border border-neutral-200 rounded text-xs text-neutral-700 flex items-center gap-2">
