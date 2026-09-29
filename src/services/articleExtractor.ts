@@ -215,12 +215,23 @@ export function extractFacebookPostOrVideo(url: string, customCaption?: string):
     url.includes('fb.watch') ||
     url.includes('/watch');
 
+  const EXCLUDED_PAGE_SLUGS = [
+    'photo', 'photos', 'photo.php', 'media', 'set', 'share', 'watch', 'reel',
+    'reels', 'videos', 'video', 'posts', 'post', 'p', 'story', 'stories',
+    'permalink.php', 'fbid', 'groups', 'events', 'profile.php'
+  ];
+
   let pageName = 'Chilli Chips Official';
   if (url.toLowerCase().includes('chillichipsofficial')) {
     pageName = 'Chilli Chips Official';
   } else {
     const match = url.match(/facebook\.com\/([a-zA-Z0-9._-]+)/);
-    if (match && match[1] && !['share', 'watch', 'reel', 'videos', 'posts', 'p'].includes(match[1])) {
+    if (
+      match &&
+      match[1] &&
+      !EXCLUDED_PAGE_SLUGS.includes(match[1].toLowerCase()) &&
+      !/^\d+$/.test(match[1])
+    ) {
       pageName = match[1];
     }
   }
@@ -231,13 +242,17 @@ export function extractFacebookPostOrVideo(url: string, customCaption?: string):
     rawCaption &&
     !rawCaption.startsWith('http://') &&
     !rawCaption.startsWith('https://') &&
-    !rawCaption.includes('facebook.com')
+    !rawCaption.includes('facebook.com') &&
+    !rawCaption.toLowerCase().startsWith('photo')
       ? rawCaption
       : undefined;
 
+  const isPhotoUrl = url.includes('/photo') || url.includes('fbid');
   const title = userCaption
     ? (userCaption.length > 70 ? userCaption.slice(0, 68) + '...' : userCaption)
-    : `${pageName} சிறப்பு சினிமா பதிவு — முக்கிய புகைப்படத் தொகுப்பு`;
+    : (isPhotoUrl
+        ? `${pageName} பிரத்யேக சினிமா புகைப்படத் தொகுப்பு`
+        : `${pageName} முகநூல் ${isVideoOrReel ? 'காணொளி & சினிமா பதிவு' : 'சிறப்பு சினிமா பதிவு'}`);
 
   const summary = userCaption
     ? userCaption.slice(0, 160)

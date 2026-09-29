@@ -96,7 +96,7 @@ export const RssImporter: React.FC<RssImporterProps> = ({
       setFetchStatusStep('உண்மையான செய்தி மற்றும் பத்திகள் பிரித்தெடுக்கப்படுகின்றன (Extracting full article & paragraphs)...');
       let article = await fetchFullNewsArticle(targetUrl);
 
-      // If user typed custom text in fbCaption (and it's not a URL), use as custom title override
+      // If user typed custom text in fbCaption (and it's not a URL), use as custom title & summary
       const cleanFbCaption = fbCaption.trim();
       if (
         cleanFbCaption &&
@@ -104,14 +104,31 @@ export const RssImporter: React.FC<RssImporterProps> = ({
         !cleanFbCaption.startsWith('https://') &&
         !cleanFbCaption.includes('facebook.com')
       ) {
+        const lines = cleanFbCaption.split('\n').map((l) => l.trim()).filter(Boolean);
+        const headline = lines[0]?.slice(0, 90) || cleanFbCaption.slice(0, 90);
+        const restOfText = lines.slice(1).join('\n\n') || cleanFbCaption;
         article = {
           ...article,
-          title: cleanFbCaption,
-          subtitle: cleanFbCaption.slice(0, 140)
+          title: headline,
+          subtitle: restOfText.slice(0, 140),
+          summary: restOfText
         };
       } else if (cleanFbCaption.startsWith('http') || cleanFbCaption.includes('facebook.com')) {
         // Clear accidentally pasted URL from caption input
         setFbCaption('');
+      }
+
+      // Guard: Never show 'photo' as headline
+      if (
+        article.title.toLowerCase().startsWith('photo') ||
+        article.title.toLowerCase() === 'facebook' ||
+        article.title.length < 5
+      ) {
+        article = {
+          ...article,
+          title: 'Chilli Chips Official பிரத்யேக சினிமா புகைப்படத் தொகுப்பு',
+          summary: 'சமூக வலைத்தளமான முகநூலில் Chilli Chips Official பக்கத்தில் வெளியாகி ரசிகர்கள் மத்தியில் பெரும் வைரலாகி வரும் பிரத்யேக சினிமா புகைப்படத் தொகுப்பு.'
+        };
       }
 
       setExtractedData(article);
@@ -420,28 +437,70 @@ export const RssImporter: React.FC<RssImporterProps> = ({
             </p>
 
             {/* Optional Caption Input */}
-            <div className="space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[11px] font-bold text-blue-950 flex items-center justify-between">
-                <span>மாற்றுத் தலைப்பு (விருப்பத்திற்கு மட்டும் - தேவையில்லையெனில் காலியாக விடலாம்):</span>
+                <span>Facebook பதிவு வாசகம் (Caption) / மாற்றுத் தலைப்பு:</span>
                 <span className="text-[10px] text-emerald-700 font-medium bg-emerald-50 px-1.5 py-0.5 rounded">
-                  காலியாக விட்டால் தானாகவே முகநூலிலிருந்து தலைப்பு பெறப்படும்
+                  விருப்பத்திற்கு மட்டும் — காலியாகவும் விடலாம்
                 </span>
               </label>
-              <input
-                type="text"
+              <textarea
+                rows={2}
                 value={fbCaption}
                 onChange={(e) => {
                   const val = e.target.value;
-                  // If user pasted a URL here, do not set as caption
                   if (val.startsWith('http://') || val.startsWith('https://') || val.includes('facebook.com')) {
                     setFbCaption('');
                   } else {
                     setFbCaption(val);
                   }
                 }}
-                placeholder="விரும்பினால் புதிய தலைப்பைத் தமிழில் தட்டச்சு செய்யலாம்... (இல்லையேல் காலியாக விடவும்)"
-                className="w-full px-3 py-2 text-xs border border-blue-300 rounded bg-white focus:outline-none focus:border-blue-600 text-neutral-800"
+                placeholder="முகநூல் பதிவின் 2 வரி உரையை (Caption) இங்கே Paste செய்தால், உடனே அசல் சினிமா தலைப்பு மற்றும் செய்தியாக மாறிவிடும்..."
+                className="w-full px-3 py-2 text-xs border border-blue-300 rounded bg-white focus:outline-none focus:border-blue-600 text-neutral-800 resize-none font-medium"
               />
+
+              {/* 1-Click Cinema Topic Quick Chips */}
+              <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
+                <span className="text-[10px] font-bold text-blue-900">⚡ 1-கிளிக் தலைப்புத் தேர்வுகள்:</span>
+                {[
+                  '‘TVK’ இசை வெளியீட்டு விழா — பிரத்யேக புகைப்படத் தொகுப்பு',
+                  'Chilli Chips Official பிரத்யேக சினிமா படப்பிடிப்புப் பதிவுகள்',
+                  'புதிய திரைப்பட ஃபர்ஸ்ட் லுக் & பிரம்மாண்ட அறிவிப்பு',
+                  'வைரல் சினிமா காட்சி & ரசிகர்களின் பெரும் வரவேற்பு'
+                ].map((chip) => (
+                  <button
+                    key={chip}
+                    type="button"
+                    onClick={() => {
+                      setFbCaption(chip);
+                      setEditTitle(chip);
+                      if (extractedData) {
+                        setExtractedData({
+                          ...extractedData,
+                          title: chip,
+                          subtitle: chip
+                        });
+                      }
+                    }}
+                    className="px-2 py-0.5 bg-white hover:bg-blue-100 text-blue-900 text-[10px] font-semibold rounded border border-blue-300 cursor-pointer transition-colors"
+                  >
+                    + {chip.slice(0, 28)}...
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Clear Helper Tips */}
+            <div className="p-2.5 bg-blue-100/60 border border-blue-300 rounded text-[11px] text-blue-950 space-y-1">
+              <div className="font-bold flex items-center gap-1 text-blue-900">
+                <span>💡 எளிய வழிமுறை (Quick Tip):</span>
+              </div>
+              <p className="leading-relaxed">
+                • <strong>Share Link வழி</strong>: Facebook பதிவின் கீழே உள்ள <strong>'Share' ➡️ 'Copy link'</strong> கொடுத்தால் (<code className="font-mono text-[10px] bg-white px-1 py-0.2 rounded">facebook.com/share/p/...</code>) அசல் தலைப்பு மற்றும் உரை 100% தானாகவே வந்துவிடும்!
+              </p>
+              <p className="leading-relaxed">
+                • <strong>Photo Link வழி</strong>: புகைப்படத்தை க்ளிக் செய்து எடுத்த லிங்க் என்றால், Facebook-ல் உள்ள உரையை காப்பி செய்து மேலே உள்ள பெட்டியில் Paste செய்யலாம் அல்லது மேலே உள்ள <strong>1-கிளிக் தலைப்பைத்</strong> தொட்டாலே போதும்!
+              </p>
             </div>
 
             {/* Action Buttons: 1-Click Formulate & External Video Downloaders */}

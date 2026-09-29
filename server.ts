@@ -140,12 +140,23 @@ app.all('/api/fetch-article', async (req: Request, res: Response) => {
 
       const docTitle = cleanText($('title').text() || '');
 
+      const EXCLUDED_PAGE_SLUGS = [
+        'photo', 'photos', 'photo.php', 'media', 'set', 'share', 'watch', 'reel',
+        'reels', 'videos', 'video', 'posts', 'post', 'p', 'story', 'stories',
+        'permalink.php', 'fbid', 'groups', 'events', 'profile.php'
+      ];
+
       let pageName = 'Chilli Chips Official';
       if (cleanUrl.toLowerCase().includes('chillichipsofficial')) {
         pageName = 'Chilli Chips Official';
       } else {
         const match = cleanUrl.match(/facebook\.com\/([a-zA-Z0-9._-]+)/);
-        if (match && match[1] && !['share', 'watch', 'reel', 'videos', 'posts', 'p'].includes(match[1])) {
+        if (
+          match &&
+          match[1] &&
+          !EXCLUDED_PAGE_SLUGS.includes(match[1].toLowerCase()) &&
+          !/^\d+$/.test(match[1])
+        ) {
           pageName = match[1];
         }
       }
@@ -153,7 +164,7 @@ app.all('/api/fetch-article', async (req: Request, res: Response) => {
       let fbHeadline = '';
       let fbSummary = '';
 
-      if (rawDesc) {
+      if (rawDesc && !rawDesc.toLowerCase().startsWith('photo') && rawDesc.length > 10) {
         // Split on punctuation to get clean first sentence
         const splitMatch = rawDesc.match(/^([^!.\n]+[!.\n])(.*)$/s);
         if (splitMatch && splitMatch[1]) {
@@ -165,19 +176,29 @@ app.all('/api/fetch-article', async (req: Request, res: Response) => {
         }
       }
 
-      if (!fbHeadline || fbHeadline.length < 5) {
-        fbHeadline = docTitle
-          .replace(/\s*[-–|]\s*Facebook.*$/i, '')
-          .replace(/^Chilli Chips\s*[-–]\s*/i, '')
-          .replace(/^[\s📸🎬🔥⚡️✨🎥📷\-–—]+/, '')
-          .trim();
+      if (
+        !fbHeadline ||
+        fbHeadline.length < 5 ||
+        fbHeadline.toLowerCase().startsWith('photo') ||
+        fbHeadline.toLowerCase() === 'facebook'
+      ) {
+        if (docTitle && docTitle.toLowerCase() !== 'facebook' && !docTitle.toLowerCase().startsWith('photo')) {
+          fbHeadline = docTitle
+            .replace(/\s*[-–|]\s*Facebook.*$/i, '')
+            .replace(/^Chilli Chips\s*[-–]\s*/i, '')
+            .replace(/^[\s📸🎬🔥⚡️✨🎥📷\-–—]+/, '')
+            .trim();
+        }
       }
 
-      if (!fbHeadline) {
-        fbHeadline = `${pageName} முகநூல் சிறப்பு சினிமா பதிவு`;
+      if (!fbHeadline || fbHeadline.toLowerCase().startsWith('photo') || fbHeadline.toLowerCase() === 'facebook') {
+        const isPhotoUrl = cleanUrl.includes('/photo') || cleanUrl.includes('fbid');
+        fbHeadline = isPhotoUrl
+          ? `${pageName} பிரத்யேக சினிமா புகைப்படத் தொகுப்பு`
+          : `${pageName} முகநூல் சிறப்பு சினிமா பதிவு`;
       }
 
-      if (!fbSummary) {
+      if (!fbSummary || fbSummary.toLowerCase().startsWith('photo')) {
         fbSummary = rawDesc || `சமூக வலைத்தளமான முகநூலில் ${pageName} பக்கத்தில் வெளியாகி ரசிகர்கள் மத்தியில் பெரும் வைரலாகி வரும் சினிமா தகவல் மற்றும் புகைப்படத் தொகுப்பு.`;
       }
 
