@@ -52,6 +52,7 @@ import { StaticPages } from './components/StaticPages';
 import { AdminDashboard } from './components/admin/AdminDashboard';
 import { AdminLoginModal } from './components/AdminLoginModal';
 import { SEOHead } from './components/SEOHead';
+import { MobileBottomNav } from './components/MobileBottomNav';
 
 type ViewMode = 'home' | 'article' | 'livetv' | 'admin' | 'static';
 
@@ -202,7 +203,7 @@ export default function App() {
   const topAd = advertisements.find((a) => a.active && a.placement === 'home_top');
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-[#202124]">
+    <div className={`min-h-screen flex flex-col bg-white text-[#202124] ${viewMode !== 'admin' ? 'pb-16 md:pb-0' : ''}`}>
       {/* SEO & Structured Data Controller */}
       <SEOHead
         currentArticle={currentArticle || undefined}
@@ -401,6 +402,17 @@ export default function App() {
             onOpenPage={(p) => handleOpenStaticPage(p as any)}
             onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
             language={language}
+          />
+
+          {/* Native App-Style Bottom Navigation for Mobile */}
+          <MobileBottomNav
+            currentView={viewMode}
+            onGoHome={handleGoHome}
+            onSelectCinema={() => handleSelectCategory('kollywood')}
+            onOpenLiveTv={handleOpenLiveTv}
+            onOpenSearch={() => setIsSearchOpen(true)}
+            language={language}
+            onToggleLanguage={handleToggleLanguage}
           />
         </>
       )}

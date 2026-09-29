@@ -32,10 +32,11 @@ export const BreakingNewsTicker: React.FC<BreakingNewsTickerProps> = ({
     >
       <div className="max-w-7xl mx-auto flex items-center">
         {/* Left Sticky Badge */}
-        <div className="shrink-0 bg-[#A00B22] px-3.5 sm:px-4 py-2 flex items-center gap-2 font-black text-xs sm:text-sm tracking-wider uppercase z-10 shadow-md">
-          <Flame className="w-4 h-4 text-amber-300 animate-pulse" />
+        <div className="shrink-0 bg-[#A00B22] px-2.5 sm:px-4 py-1.5 sm:py-2 flex items-center gap-1.5 sm:gap-2 font-black text-[11px] sm:text-xs md:text-sm tracking-wider uppercase z-10 shadow-md">
+          <Flame className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-300 animate-pulse" />
           <span className="whitespace-nowrap font-bold">
-            {language === 'ta' ? 'முக்கிய செய்திகள்' : 'BREAKING NEWS'}
+            <span className="sm:hidden">{language === 'ta' ? 'முக்கியம்' : 'FLASH'}</span>
+            <span className="hidden sm:inline">{language === 'ta' ? 'முக்கிய செய்திகள்' : 'BREAKING NEWS'}</span>
           </span>
           <span className="hidden md:inline-block w-2 h-2 rounded-full bg-white animate-ping"></span>
         </div>

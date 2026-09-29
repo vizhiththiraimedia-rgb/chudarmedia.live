@@ -151,32 +151,20 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Live TV Button with Pulsing Dot */}
           <button
             onClick={onOpenLiveTv}
-            className="flex items-center gap-2 px-3 py-1.5 sm:px-3.5 sm:py-2 rounded-md bg-[#C8102E] text-white hover:bg-[#a50d25] transition-all shadow-xs cursor-pointer text-xs sm:text-sm font-bold tracking-wide"
+            className="flex items-center gap-1.5 sm:gap-2 px-2.5 py-1.5 sm:px-3.5 sm:py-2 rounded-full sm:rounded-md bg-[#C8102E] text-white hover:bg-[#a50d25] transition-all shadow-xs cursor-pointer text-xs sm:text-sm font-bold tracking-wide shrink-0"
           >
-            <span className="relative flex h-2.5 w-2.5">
+            <span className="relative flex h-2 w-2 sm:h-2.5 sm:w-2.5">
               <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-white opacity-75"></span>
-              <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-white"></span>
+              <span className="relative inline-flex rounded-full h-2 w-2 sm:h-2.5 sm:w-2.5 bg-white"></span>
             </span>
-            <Tv className="w-4 h-4" />
-            <span className="whitespace-nowrap uppercase">LIVE TV</span>
+            <Tv className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="whitespace-nowrap uppercase text-[11px] sm:text-xs">LIVE TV</span>
           </button>
-
-          {/* Admin Login Button */}
-          {onOpenAdminLogin && (
-            <button
-              onClick={onOpenAdminLogin}
-              className="hidden md:flex items-center gap-1.5 px-3 py-1.5 sm:py-2 rounded-md border border-neutral-300 hover:border-[#C8102E] text-neutral-800 hover:text-[#C8102E] hover:bg-red-50/50 transition-colors text-xs font-bold cursor-pointer"
-              title="Journalist & Admin Portal"
-            >
-              <Lock className="w-3.5 h-3.5 text-[#C8102E]" />
-              <span>Admin Login</span>
-            </button>
-          )}
 
           {/* Search Trigger */}
           <button
             onClick={onOpenSearch}
-            className="p-2 sm:px-3 sm:py-2 rounded-md border border-neutral-300 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-2 text-xs font-medium cursor-pointer"
+            className="p-2 sm:px-3 sm:py-2 rounded-full sm:rounded-md border border-neutral-300 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-50 transition-colors flex items-center gap-2 text-xs font-medium cursor-pointer"
             title="செய்திகளைத் தேடுக"
           >
             <Search className="w-4 h-4 text-neutral-600" />
@@ -186,12 +174,32 @@ export const Header: React.FC<HeaderProps> = ({
           {/* Mobile Hamburger Menu Toggle */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="lg:hidden p-2 rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
+            className="lg:hidden p-1.5 sm:p-2 rounded-md text-neutral-700 hover:bg-neutral-100 transition-colors cursor-pointer"
             aria-label="Toggle navigation menu"
           >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            {mobileMenuOpen ? <X className="w-5 h-5 sm:w-6 sm:h-6" /> : <Menu className="w-5 h-5 sm:w-6 sm:h-6" />}
           </button>
         </div>
+      </div>
+
+      {/* Mobile Sub-Header: Native App Style Swipeable Category Carousel */}
+      <div className="lg:hidden bg-neutral-950 border-t border-neutral-800 px-3 py-2 overflow-x-auto no-scrollbar scroll-smooth flex items-center gap-2 shadow-inner">
+        {categories.map((cat) => {
+          const isActive = activeCategoryId === cat.id;
+          return (
+            <button
+              key={cat.id}
+              onClick={() => handleCategoryClick(cat.id)}
+              className={`px-3 py-1 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all cursor-pointer ${
+                isActive
+                  ? 'bg-[#C8102E] text-white shadow-sm ring-1 ring-white/30'
+                  : 'bg-neutral-900 text-neutral-300 hover:text-white hover:bg-neutral-800 border border-neutral-800'
+              }`}
+            >
+              {language === 'ta' ? cat.nameTa : cat.nameEn}
+            </button>
+          );
+        })}
       </div>
 
       {/* Primary Category Navigation Bar (Desktop) */}
@@ -254,19 +262,6 @@ export const Header: React.FC<HeaderProps> = ({
               <Tv className="w-4 h-4" />
               <span>சுடர் டிவி நேரலை (LIVE TV)</span>
             </button>
-
-            {onOpenAdminLogin && (
-              <button
-                onClick={() => {
-                  setMobileMenuOpen(false);
-                  onOpenAdminLogin();
-                }}
-                className="w-full py-2.5 px-3 rounded bg-neutral-800 hover:bg-neutral-700 text-white font-bold text-xs flex items-center justify-center gap-2 border border-neutral-700 cursor-pointer"
-              >
-                <Lock className="w-4 h-4 text-[#C8102E]" />
-                <span>நிர்வாகி உள்நுழைவு (Admin Login)</span>
-              </button>
-            )}
           </div>
         </div>
       )}
