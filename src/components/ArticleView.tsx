@@ -47,6 +47,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
   language
 }) => {
   const [fontSize, setFontSize] = useState<'normal' | 'large' | 'xlarge'>('normal');
+  const [spacingMode, setSpacingMode] = useState<'normal' | 'spacious'>('spacious');
   const [readingProgress, setReadingProgress] = useState(0);
   const [isPlayingAudio, setIsPlayingAudio] = useState(false);
 
@@ -163,10 +164,71 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
   // Font size classes
   const fontClass =
     fontSize === 'xlarge'
-      ? 'text-lg sm:text-xl leading-relaxed sm:leading-loose'
+      ? 'text-[17px] sm:text-[19px] md:text-[21px]'
       : fontSize === 'large'
-      ? 'text-base sm:text-lg leading-relaxed'
-      : 'text-sm sm:text-base leading-relaxed';
+      ? 'text-[16px] sm:text-[17.5px] md:text-[19px]'
+      : 'text-[15px] sm:text-[16.5px] md:text-[17.5px]';
+
+  // Format and beautify article body into distinct, airy paragraphs
+  const prepareArticleContentHtml = (rawContent: string): string => {
+    if (!rawContent) return '';
+
+    // Strip external credits or unwanted CineUlagam mentions
+    let text = rawContent
+      .replace(/<[^>]*>.*?மூல\s*செய்தி.*?<\/[^>]*>/gi, '')
+      .replace(/<[^>]*>.*?CineUlagam.*?<\/[^>]*>/gi, '')
+      .replace(/மூல\s*செய்தி[^\n<]*/gi, '')
+      .replace(/செய்தி\s*மூலம்[^\n<]*/gi, '')
+      .replace(/மூலம்:[^\n<]*/gi, '')
+      .replace(/CineUlagam(\s*\(சினிஉலகம்\))?/gi, '')
+      .replace(/சினி\s*உலகம்/gi, '')
+      .trim();
+
+    // Convert multiple break tags into paragraph dividers
+    text = text.replace(/(<br\s*\/?>\s*){2,}/gi, '</p><p class="article-paragraph">');
+
+    // Check if content already has HTML tags
+    const hasHtmlTags = /<(p|div|h[1-6]|blockquote|ul|ol|table|iframe|article|section)[^>]*>/i.test(text);
+
+    if (!hasHtmlTags) {
+      // Pure plain text: handle newlines
+      // If double newlines exist (\n\n), split on double newlines; if only single newlines exist, split on each newline!
+      const splitRegex = /\r?\n\s*\r?\n/.test(text) ? /\r?\n\s*\r?\n/ : /\r?\n/;
+      const blocks = text
+        .split(splitRegex)
+        .map((b) => b.trim())
+        .filter(Boolean);
+
+      return blocks
+        .map((block) => {
+          if (block.startsWith('###') || block.startsWith('##') || block.startsWith('#')) {
+            const h = block.replace(/^#+\s*/, '');
+            return `<h3>${h}</h3>`;
+          }
+          if (block.startsWith('>') || (block.startsWith('"') && block.endsWith('"') && block.length > 30)) {
+            return `<blockquote>${block.replace(/^>\s*/, '')}</blockquote>`;
+          }
+          return `<p class="article-paragraph">${block}</p>`;
+        })
+        .join('\n\n');
+    }
+
+    // If HTML blocks exist:
+    // Convert <div>...</div> into paragraphs
+    text = text.replace(/<div[^>]*>/gi, '<p class="article-paragraph">');
+    text = text.replace(/<\/div>/gi, '</p>');
+
+    // Ensure <p> tags have class "article-paragraph"
+    text = text.replace(/<p(?![^>]*class=)[^>]*>/gi, '<p class="article-paragraph">');
+
+    // Split paragraphs if sentences inside a <p> are separated by a <br>
+    text = text.replace(/([.!?\"'”])\s*<br\s*\/?>\s*/gi, '$1</p><p class="article-paragraph">');
+
+    // Strip empty paragraphs
+    text = text.replace(/<p[^>]*>\s*(&nbsp;|<br\s*\/?>)?\s*<\/p>/gi, '');
+
+    return text;
+  };
 
   return (
     <div className="article-container max-w-4xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 w-full min-w-0 overflow-hidden">
@@ -291,13 +353,13 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
             </button>
 
             {/* Font size adjustment */}
-            <div className="flex items-center gap-1 border border-neutral-300 rounded-sm bg-white p-0.5">
+            <div className="flex items-center gap-1 border border-neutral-300 rounded-sm bg-white p-0.5" title="எழுத்து அளவு (Font Size)">
               <button
                 onClick={() => setFontSize('normal')}
                 className={`px-2 py-0.5 text-xs font-medium rounded-xs cursor-pointer ${
                   fontSize === 'normal' ? 'bg-[#111111] text-white' : 'text-neutral-600 hover:text-black'
                 }`}
-                title="Normal Font Size"
+                title="இயல்பான எழுத்து (Normal)"
               >
                 A
               </button>
@@ -306,7 +368,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
                 className={`px-2 py-0.5 text-xs font-bold rounded-xs cursor-pointer ${
                   fontSize === 'large' ? 'bg-[#111111] text-white' : 'text-neutral-600 hover:text-black'
                 }`}
-                title="Large Font Size"
+                title="பெரிய எழுத்து (Large)"
               >
                 A+
               </button>
@@ -315,9 +377,36 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
                 className={`px-2 py-0.5 text-xs font-extrabold rounded-xs cursor-pointer ${
                   fontSize === 'xlarge' ? 'bg-[#111111] text-white' : 'text-neutral-600 hover:text-black'
                 }`}
-                title="Extra Large Font Size"
+                title="மிகப் பெரிய எழுத்து (Extra Large)"
               >
                 A++
+              </button>
+            </div>
+
+            {/* Paragraph Spacing toggle (Normal / Airy Spacious) */}
+            <div className="flex items-center gap-1 border border-neutral-300 rounded-sm bg-white p-0.5" title="பத்தி இடைவெளி (Paragraph Spacing)">
+              <button
+                onClick={() => setSpacingMode('normal')}
+                className={`px-2 py-0.5 text-xs font-medium rounded-xs cursor-pointer transition-colors ${
+                  spacingMode === 'normal'
+                    ? 'bg-[#111111] text-white font-bold'
+                    : 'text-neutral-600 hover:text-black'
+                }`}
+                title={language === 'ta' ? 'இயல்பான இடைவெளி' : 'Standard Spacing'}
+              >
+                {language === 'ta' ? 'இயல்பு' : 'Normal'}
+              </button>
+              <button
+                onClick={() => setSpacingMode('spacious')}
+                className={`px-2.5 py-0.5 text-xs font-bold rounded-xs cursor-pointer transition-colors flex items-center gap-1 ${
+                  spacingMode === 'spacious'
+                    ? 'bg-[#C8102E] text-white shadow-2xs'
+                    : 'text-neutral-600 hover:text-black'
+                }`}
+                title={language === 'ta' ? 'பந்தி பந்தியாக தாராள இடைவெளி' : 'Spacious Paragraphs'}
+              >
+                <span>🌿</span>
+                <span>{language === 'ta' ? 'தாராள இடைவெளி' : 'Spacious'}</span>
               </button>
             </div>
           </div>
@@ -372,32 +461,11 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
         </p>
       </div>
 
-      {/* Main Article Body Content */}
+      {/* Main Article Body Content with Beautiful Airy Paragraph Separation */}
       <div
-        className={`article-prose prose prose-neutral max-w-none text-neutral-800 ${fontClass} mb-10`}
+        className={`article-prose ${spacingMode === 'spacious' ? 'spacious-mode' : 'compact-mode'} max-w-none text-neutral-800 ${fontClass} mb-10`}
         dangerouslySetInnerHTML={{
-          __html: (() => {
-            const raw = article.content || '';
-            // Strip any external source attribution or CineUlagam mentions
-            const stripped = raw
-              .replace(/<[^>]*>.*?மூல\s*செய்தி.*?<\/[^>]*>/gi, '')
-              .replace(/<[^>]*>.*?CineUlagam.*?<\/[^>]*>/gi, '')
-              .replace(/மூல\s*செய்தி[^\n<]*/gi, '')
-              .replace(/செய்தி\s*மூலம்[^\n<]*/gi, '')
-              .replace(/மூலம்:[^\n<]*/gi, '')
-              .replace(/CineUlagam(\s*\(சினிஉலகம்\))?/gi, '')
-              .replace(/சினி\s*உலகம்/gi, '')
-              .trim();
-
-            if (stripped.includes('<p') || stripped.includes('<div') || stripped.includes('<h')) {
-              return stripped;
-            }
-            return stripped
-              .split(/\n\s*\n/)
-              .filter(Boolean)
-              .map((p) => `<p>${p.trim()}</p>`)
-              .join('');
-          })()
+          __html: prepareArticleContentHtml(article.content || '')
         }}
       />
 

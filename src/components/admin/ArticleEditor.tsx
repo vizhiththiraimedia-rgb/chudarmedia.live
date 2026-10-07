@@ -705,7 +705,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                     setPlainContentText(htmlToPlainText(visualEditorRef.current.innerHTML));
                   }
                 }}
-                className="min-h-[260px] max-h-[520px] overflow-y-auto p-4 border border-neutral-300 rounded-b bg-white text-neutral-900 text-sm sm:text-base leading-relaxed focus:outline-none focus:border-[#C8102E] font-serif-tamil space-y-3 prose prose-neutral max-w-none"
+                className="article-prose spacious-mode min-h-[260px] max-h-[520px] overflow-y-auto p-4 border border-neutral-300 rounded-b bg-white text-neutral-900 text-sm sm:text-base leading-[2.1] focus:outline-none focus:border-[#C8102E] font-serif-tamil max-w-none"
               />
             )}
 
@@ -717,8 +717,8 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
                   setPlainContentText(e.target.value);
                   setContent(plainTextToHtml(e.target.value));
                 }}
-                placeholder="இங்கு செய்தியின் பத்திகளை சாதாரணமாக எழுதவும். HTML குறியீடுகள் தேவையில்லை..."
-                className="w-full p-4 border border-neutral-300 rounded-b bg-white text-neutral-900 text-sm sm:text-base leading-relaxed focus:outline-none focus:border-[#C8102E] font-serif-tamil"
+                placeholder="இங்கு செய்தியின் பத்திகளை சாதாரணமாக எழுதவும். ஒவ்வொரு பத்திக்கும் இடையே Enter அழுத்தி இடைவெளி விட்டு எழுதவும்..."
+                className="w-full p-4 border border-neutral-300 rounded-b bg-white text-neutral-900 text-sm sm:text-base leading-[2.1] focus:outline-none focus:border-[#C8102E] font-serif-tamil"
               />
             )}
 
@@ -734,12 +734,13 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
               />
             )}
 
-            <div className="flex items-center justify-between text-[11px] text-neutral-500 pt-1">
-              <span>
-                {plainContentText.split(/\n\s*\n/).filter(Boolean).length} பத்திகள் • {plainContentText.split(/\s+/).filter(Boolean).length} வார்த்தைகள்
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between text-[11px] text-neutral-500 pt-1.5 gap-1 border-t border-neutral-100">
+              <span className="text-amber-800 bg-amber-50 px-2 py-0.5 rounded flex items-center gap-1 font-medium">
+                <span>💡</span>
+                <span>பத்திகளுக்கு இடையே Enter கொடுத்து எழுதுங்கள்; வாசகர்களுக்கு இடைவெளியுடன் பந்தி பந்தியாக அழகாகத் தெரியும்.</span>
               </span>
-              <span className="text-emerald-700 font-medium">
-                {contentMode === 'visual' ? '✓ நேரடி காட்சி வடிவம்' : contentMode === 'plain' ? '✓ எளிய உரை வடிவம்' : '✓ HTML மூல வடிவம்'}
+              <span className="text-emerald-700 font-semibold self-end sm:self-auto">
+                {plainContentText.split(/\n\s*\n/).filter(Boolean).length || 1} பத்திகள் • {contentMode === 'visual' ? '✓ நேரடி காட்சி' : contentMode === 'plain' ? '✓ எளிய உரை' : '✓ HTML'}
               </span>
             </div>
           </div>

@@ -83,3 +83,162 @@ img, video, iframe {
   }
 }
 
+/* =========================================================================
+   ARTICLE PROSE & EDITORIAL TYPOGRAPHY (Generous Paragraph Spacing & Breathing Room)
+   ========================================================================= */
+
+.article-prose {
+  font-family: 'Noto Sans Tamil', 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  color: #1f2937;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Default Airy & Beautiful Paragraph Separation for Tamil News */
+.article-prose p,
+.article-prose .article-paragraph {
+  margin-top: 0 !important;
+  margin-bottom: 1.75rem !important; /* ~28px gap between paragraphs */
+  line-height: 2.1 !important;        /* Generous line-height for Tamil kombu & suzhi characters */
+  font-size: inherit;
+  color: #1f2937;
+  letter-spacing: 0.012em;
+}
+
+/* Spacious Mode (Extra Airy Spacing for Relaxed Reading) */
+.article-prose.spacious-mode p,
+.article-prose.spacious-mode .article-paragraph {
+  margin-bottom: 2.25rem !important; /* ~36px spacious gap between paragraphs */
+  line-height: 2.25 !important;
+}
+
+/* Compact Mode */
+.article-prose.compact-mode p,
+.article-prose.compact-mode .article-paragraph {
+  margin-bottom: 1.25rem !important;
+  line-height: 1.9 !important;
+}
+
+.article-prose p:last-child,
+.article-prose .article-paragraph:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Lead paragraph styling for newspaper feel */
+.article-prose > p:first-of-type,
+.article-prose > .article-paragraph:first-of-type {
+  font-size: 1.04em;
+  font-weight: 500;
+  color: #111827;
+  line-height: 2.15 !important;
+}
+
+/* Subheadings with elegant red accent bar */
+.article-prose h2,
+.article-prose h3,
+.article-prose h4 {
+  font-family: 'Noto Serif Tamil', 'Cinzel', serif !important;
+  font-weight: 700 !important;
+  color: #0f172a !important;
+  margin-top: 2.5rem !important;
+  margin-bottom: 1.25rem !important;
+  line-height: 1.5 !important;
+}
+
+.article-prose h2 {
+  font-size: 1.38em !important;
+  border-left: 4px solid #C8102E;
+  padding-left: 0.85rem;
+  background: linear-gradient(to right, rgba(200, 16, 46, 0.05), transparent);
+  padding-top: 0.3rem;
+  padding-bottom: 0.3rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.article-prose h3 {
+  font-size: 1.22em !important;
+  border-left: 3.5px solid #C8102E;
+  padding-left: 0.75rem;
+  background: linear-gradient(to right, rgba(200, 16, 46, 0.04), transparent);
+  padding-top: 0.25rem;
+  padding-bottom: 0.25rem;
+  border-radius: 0 4px 4px 0;
+}
+
+.article-prose h4 {
+  font-size: 1.1em !important;
+  border-left: 2.5px solid #C8102E;
+  padding-left: 0.6rem;
+}
+
+/* Editorial Blockquotes */
+.article-prose blockquote {
+  margin: 2.25rem 0 !important;
+  padding: 1.25rem 1.75rem !important;
+  border-left: 4px solid #C8102E !important;
+  background-color: #f8fafc !important;
+  border-radius: 0 0.5rem 0.5rem 0 !important;
+  font-style: italic;
+  font-size: 1.06em !important;
+  line-height: 2.1 !important;
+  color: #334155 !important;
+  box-shadow: inset 0 1px 0 rgba(0, 0, 0, 0.03);
+}
+
+.article-prose blockquote p {
+  margin-bottom: 0.75rem !important;
+  color: inherit !important;
+}
+
+.article-prose blockquote p:last-child {
+  margin-bottom: 0 !important;
+}
+
+/* Lists */
+.article-prose ul {
+  list-style-type: disc !important;
+  margin: 1.5rem 0 !important;
+  padding-left: 1.75rem !important;
+}
+
+.article-prose ol {
+  list-style-type: decimal !important;
+  margin: 1.5rem 0 !important;
+  padding-left: 1.75rem !important;
+}
+
+.article-prose li {
+  margin-bottom: 0.75rem !important;
+  line-height: 2 !important;
+}
+
+/* Links inside article */
+.article-prose a {
+  color: #C8102E !important;
+  text-decoration: underline !important;
+  text-underline-offset: 4px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+}
+
+.article-prose a:hover {
+  color: #990B22 !important;
+}
+
+/* Strong / Bold emphasis */
+.article-prose strong,
+.article-prose b {
+  font-weight: 700 !important;
+  color: #0f172a !important;
+}
+
+/* Horizontal rule divider */
+.article-prose hr {
+  border: 0 !important;
+  border-top: 1px dashed #d1d5db !important;
+  margin: 2.5rem 0 !important;
+}
+
+

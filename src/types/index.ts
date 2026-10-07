@@ -107,6 +107,7 @@ export interface Advertisement {
   title: string;
   placement: AdPlacement;
   imageUrl: string;
+  mobileImageUrl?: string;
   targetUrl: string;
   active: boolean;
   impressions: number;

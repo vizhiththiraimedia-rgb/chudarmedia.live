@@ -51,15 +51,24 @@ export function htmlToPlainText(html: string): string {
 }
 
 /**
- * Convert plain text paragraphs into clean HTML <p>...</p> tags
+ * Convert plain text paragraphs into clean HTML <p>...</p> tags with proper paragraph separation
  */
 export function plainTextToHtml(text: string): string {
   if (!text) return '';
   const trimmed = text.trim();
+  
+  // If HTML is passed, normalize breaks into proper paragraphs
   if (trimmed.startsWith('<p') || trimmed.startsWith('<div') || trimmed.startsWith('<h')) {
-    return trimmed;
+    return trimmed
+      .replace(/(<br\s*\/?>\s*){2,}/gi, '</p>\n\n<p>')
+      .replace(/<div[^>]*>/gi, '<p>')
+      .replace(/<\/div>/gi, '</p>')
+      .trim();
   }
-  const blocks = trimmed.split(/\n\s*\n/).map((b) => b.trim()).filter(Boolean);
+
+  // Handle both double newlines and single newlines intelligently
+  const splitRegex = /\r?\n\s*\r?\n/.test(trimmed) ? /\r?\n\s*\r?\n/ : /\r?\n/;
+  const blocks = trimmed.split(splitRegex).map((b) => b.trim()).filter(Boolean);
   return blocks
     .map((block) => {
       if (block.startsWith('###') || block.startsWith('##') || block.startsWith('#')) {

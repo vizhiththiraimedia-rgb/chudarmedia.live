@@ -408,14 +408,26 @@ export default function App() {
                 target="_blank"
                 rel="noopener noreferrer"
                 onClick={() => recordAdClick(topAd.id)}
-                className="block overflow-hidden rounded-xs border border-neutral-200 hover:opacity-95 transition-opacity bg-neutral-900"
+                className="relative block overflow-hidden rounded-sm border border-neutral-300 hover:border-neutral-400 bg-black transition-all group shadow-xs"
               >
-                <img
-                  src={topAd.imageUrl}
-                  alt={topAd.title}
-                  referrerPolicy="no-referrer"
-                  className="w-full h-auto min-h-[60px] max-h-28 sm:max-h-36 object-cover"
+                {/* Ambient glow in background so any empty sides blend seamlessly */}
+                <div
+                  className="absolute inset-0 bg-cover bg-center opacity-25 blur-lg scale-110 pointer-events-none"
+                  style={{ backgroundImage: `url(${topAd.imageUrl})` }}
+                  aria-hidden="true"
                 />
+                {/* Foreground crisp image: object-contain preserves 100% of title and graphics without any cropping */}
+                <picture className="relative z-10 block w-full">
+                  {topAd.mobileImageUrl && (
+                    <source media="(max-width: 640px)" srcSet={topAd.mobileImageUrl} />
+                  )}
+                  <img
+                    src={topAd.imageUrl}
+                    alt={topAd.title}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-auto min-h-[60px] max-h-36 sm:max-h-48 md:max-h-60 object-contain mx-auto transition-transform duration-200 group-hover:scale-[1.005]"
+                  />
+                </picture>
               </a>
             </div>
           )}

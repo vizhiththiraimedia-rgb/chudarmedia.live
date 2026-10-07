@@ -85,6 +85,29 @@ export const SettingsManager: React.FC<SettingsManagerProps> = ({
           Paste the URL of your official Chudar Media logo image here. If left blank, the portal automatically uses the stylized signature flame logo.
         </p>
 
+        <div className="p-3.5 bg-neutral-900 text-white rounded text-xs space-y-2">
+          <div className="font-bold text-amber-300 flex items-center gap-1.5">
+            <span>📐 லோகோவின் சரியான அளவுகள் (Recommended Logo Dimensions):</span>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-[11px] text-neutral-300 pt-0.5">
+            <div className="p-2 bg-neutral-800 rounded border border-neutral-700">
+              <span className="text-white font-bold block mb-0.5">✨ சிறந்த விகிதம் (Aspect Ratio):</span>
+              <span className="font-mono text-emerald-300 font-bold">4:1 அல்லது 5:1 (கிடைமட்டம் / Horizontal)</span>
+              <p className="text-[10px] text-neutral-400 mt-0.5">நீளவாக்கு லோகோ Header-க்கு மிகச் சிறந்தது</p>
+            </div>
+            <div className="p-2 bg-neutral-800 rounded border border-neutral-700">
+              <span className="text-white font-bold block mb-0.5">📏 சிறந்த அளவு (Dimensions):</span>
+              <span className="font-mono text-amber-300 font-bold">250 × 60 px (அல்லது 300 × 75 px)</span>
+              <p className="text-[10px] text-neutral-400 mt-0.5">PC-யில் 44px உயரத்திலும், மொபைலில் 36px-லும் பொருந்தும்</p>
+            </div>
+            <div className="p-2 bg-neutral-800 rounded border border-neutral-700">
+              <span className="text-white font-bold block mb-0.5">🎨 வடிவம் (Image Format):</span>
+              <span className="font-mono text-cyan-300 font-bold">Transparent PNG அல்லது SVG</span>
+              <p className="text-[10px] text-neutral-400 mt-0.5">வெள்ளை / கருப்பு பின்னணியில் அழகாகத் தெரிய</p>
+            </div>
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 md:grid-cols-12 gap-4 items-center">
           <div className="md:col-span-8">
             <label className="block text-xs font-bold text-neutral-700 mb-1">

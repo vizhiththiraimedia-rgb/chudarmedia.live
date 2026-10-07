@@ -18,6 +18,7 @@ export const AdManager: React.FC<AdManagerProps> = ({
   const [clientName, setClientName] = useState('');
   const [placement, setPlacement] = useState<AdPlacement>('home_top');
   const [imageUrl, setImageUrl] = useState('');
+  const [mobileImageUrl, setMobileImageUrl] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
   const [startDate, setStartDate] = useState('2026-09-01');
   const [endDate, setEndDate] = useState('2026-12-31');
@@ -33,6 +34,7 @@ export const AdManager: React.FC<AdManagerProps> = ({
       clientName: clientName.trim() || 'Movie Production House',
       placement,
       imageUrl: imageUrl.trim(),
+      mobileImageUrl: mobileImageUrl.trim() || undefined,
       targetUrl: targetUrl.trim(),
       active: true,
       impressions: editingId ? advertisements.find((a) => a.id === editingId)?.impressions || 0 : 0,
@@ -45,6 +47,7 @@ export const AdManager: React.FC<AdManagerProps> = ({
     setTitle('');
     setClientName('');
     setImageUrl('');
+    setMobileImageUrl('');
     setTargetUrl('');
     setEditingId(null);
     setShowAddForm(false);
@@ -56,6 +59,7 @@ export const AdManager: React.FC<AdManagerProps> = ({
     setClientName(ad.clientName);
     setPlacement(ad.placement);
     setImageUrl(ad.imageUrl);
+    setMobileImageUrl(ad.mobileImageUrl || '');
     setTargetUrl(ad.targetUrl);
     setStartDate(ad.startDate);
     setEndDate(ad.endDate);
@@ -101,9 +105,38 @@ export const AdManager: React.FC<AdManagerProps> = ({
 
       {showAddForm && (
         <form onSubmit={handleSubmit} className="p-5 bg-neutral-50 rounded border border-neutral-200 space-y-4">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800">
-            {editingId ? 'Edit Campaign Banner' : 'Create New Movie Promotion Campaign'}
-          </h3>
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-neutral-200 pb-3">
+            <h3 className="text-xs font-bold uppercase tracking-wider text-neutral-800">
+              {editingId ? 'Edit Campaign Banner' : 'Create New Movie Promotion Campaign'}
+            </h3>
+            <span className="text-[10px] bg-amber-100 text-amber-800 px-2 py-0.5 rounded font-medium">
+              PC & Mobile Responsive Banner
+            </span>
+          </div>
+
+          {/* Banner Image Size & Design Guidelines Helper */}
+          <div className="p-3.5 bg-gradient-to-r from-neutral-900 to-neutral-800 text-white rounded text-xs space-y-1.5 shadow-xs">
+            <div className="font-bold text-amber-300 flex items-center gap-1.5">
+              <span>📐 சிறந்த பட அளவுகள் (Recommended Banner Dimensions & Safe Area):</span>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-2 text-[11px] text-neutral-300 pt-1">
+              <div className="p-2 bg-neutral-800/80 rounded border border-neutral-700">
+                <span className="text-white font-bold block mb-0.5">🖥️ PC / Laptop (கணினி):</span>
+                <span className="font-mono text-amber-300 font-bold">1200 × 250 px</span> (அல்லது 1200 × 300 px)
+                <p className="text-[10px] text-neutral-400 mt-0.5">Wide Leaderboard Display</p>
+              </div>
+              <div className="p-2 bg-neutral-800/80 rounded border border-neutral-700">
+                <span className="text-white font-bold block mb-0.5">📱 Mobile / App (கைப்பேசி):</span>
+                <span className="font-mono text-amber-300 font-bold">600 × 200 px</span> (அல்லது 600 × 300 px)
+                <p className="text-[10px] text-neutral-400 mt-0.5">Clean Mobile Screen Ratio</p>
+              </div>
+              <div className="p-2 bg-neutral-800/80 rounded border border-neutral-700">
+                <span className="text-white font-bold block mb-0.5">✨ ஒரே படம் இரண்டிலும் வர:</span>
+                <span className="font-mono text-emerald-300 font-bold">1200 × 300 px</span>
+                <p className="text-[10px] text-neutral-400 mt-0.5">முக்கிய எழுத்துகளை நடுப்பகுதியில் (Center 70%) வைக்கவும்.</p>
+              </div>
+            </div>
+          </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
@@ -174,43 +207,74 @@ export const AdManager: React.FC<AdManagerProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Banner Poster Image URL *
+                Desktop / Universal Banner Poster Image URL *
               </label>
               <input
                 type="url"
                 required
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
+                placeholder="https://... (1200x250 or 1200x300 px)"
                 className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-mono"
               />
               {imageUrl.trim() && (
                 <div className="mt-2 p-2 bg-neutral-100 rounded border border-neutral-200">
-                  <span className="text-[10px] text-neutral-500 font-bold block mb-1">Image Preview:</span>
+                  <span className="text-[10px] text-neutral-500 font-bold block mb-1">PC / Main Preview:</span>
                   <img
                     src={imageUrl.trim()}
                     alt="Ad Preview"
                     onError={(e) => {
                       (e.target as HTMLElement).style.display = 'none';
                     }}
-                    className="max-h-24 w-full object-cover rounded bg-neutral-900"
+                    className="max-h-24 w-full object-contain rounded bg-black"
                   />
                 </div>
               )}
             </div>
+
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Target Booking / Video URL *
+                Mobile Banner Image URL (விருப்பத்தேர்வு - Optional Mobile Size)
               </label>
               <input
                 type="url"
-                required
-                value={targetUrl}
-                onChange={(e) => setTargetUrl(e.target.value)}
-                placeholder="https://ticket-booking.com/movie"
+                value={mobileImageUrl}
+                onChange={(e) => setMobileImageUrl(e.target.value)}
+                placeholder="https://... (600x200 or 600x300 px)"
                 className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-mono"
               />
+              {mobileImageUrl.trim() ? (
+                <div className="mt-2 p-2 bg-neutral-100 rounded border border-neutral-200">
+                  <span className="text-[10px] text-neutral-500 font-bold block mb-1">Mobile Preview:</span>
+                  <img
+                    src={mobileImageUrl.trim()}
+                    alt="Mobile Preview"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                    className="max-h-24 w-full object-contain rounded bg-black"
+                  />
+                </div>
+              ) : (
+                <p className="text-[10px] text-neutral-400 mt-1">
+                  (இங்கு காலியாக விட்டால் கணினி படமே மொபைலிலும் தானாகப் பொருந்தும் - Falls back to desktop image)
+                </p>
+              )}
             </div>
+          </div>
+
+          <div>
+            <label className="block text-xs font-semibold text-neutral-700 mb-1">
+              Target Booking / Video URL (கிளிக் செய்தால் செல்லும் முகவரி) *
+            </label>
+            <input
+              type="url"
+              required
+              value={targetUrl}
+              onChange={(e) => setTargetUrl(e.target.value)}
+              placeholder="https://ticket-booking.com/movie"
+              className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-mono"
+            />
           </div>
 
           <div className="flex items-center gap-2">
