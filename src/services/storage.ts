@@ -292,6 +292,39 @@ export function initializeStore() {
     } catch (e) {
       console.warn('Firestore video_trailers setup error:', e);
     }
+
+    // 7. Sync Advertisements collection
+    try {
+      onSnapshot(collection(db, 'ads'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudAds: Advertisement[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudAds.push(docSnap.data() as Advertisement);
+          });
+          const localAds = getItem<Advertisement[]>(STORAGE_KEYS.ADS, []);
+          const merged = new Map<string, Advertisement>();
+          cloudAds.forEach((a) => merged.set(a.id, a));
+          localAds.forEach((a) => {
+            if (!merged.has(a.id)) {
+              merged.set(a.id, a);
+              setDoc(doc(db, 'ads', a.id), cleanForFirestore(a)).catch(console.warn);
+            }
+          });
+          const list = Array.from(merged.values());
+          localStorage.setItem(STORAGE_KEYS.ADS, JSON.stringify(list));
+          notify();
+        } else {
+          const currentAds = getItem<Advertisement[]>(STORAGE_KEYS.ADS, INITIAL_ADS);
+          currentAds.forEach((a) => {
+            setDoc(doc(db, 'ads', a.id), cleanForFirestore(a)).catch(console.warn);
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore ads sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore ads setup error:', e);
+    }
   }
 }
 
@@ -495,14 +528,16 @@ export function saveAdvertisement(ad: Advertisement): void {
   if (index >= 0) {
     ads[index] = ad;
   } else {
-    ads.push(ad);
+    ads.unshift(ad); // Newest ads take priority
   }
   setItem(STORAGE_KEYS.ADS, ads);
+  setDoc(doc(db, 'ads', ad.id), cleanForFirestore(ad)).catch(console.warn);
 }
 
 export function deleteAdvertisement(id: string): void {
   const ads = getAdvertisements().filter((a) => a.id !== id);
   setItem(STORAGE_KEYS.ADS, ads);
+  deleteDoc(doc(db, 'ads', id)).catch(console.warn);
 }
 
 export function recordAdImpression(id: string): void {

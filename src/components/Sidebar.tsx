@@ -33,10 +33,14 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [newsletterSubscribed, setNewsletterSubscribed] = useState(false);
   const [activeTab, setActiveTab] = useState<'trending' | 'boxoffice'>('trending');
 
-  // Filter sidebar ad
-  const sidebarAd = advertisements.find(
-    (a) => a.active && (a.placement === 'home_sidebar' || a.placement === 'home_top')
-  );
+  // Filter sidebar ad (prioritizes newly created custom ads)
+  const isCustom = (a: any) => !['ad-1', 'ad-2', 'ad-3'].includes(a.id);
+  const activeAds = advertisements.filter((a) => a.active);
+  const sidebarAd =
+    activeAds.find((a) => isCustom(a) && (a.placement === 'home_sidebar' || a.placement === 'home_top')) ||
+    activeAds.find((a) => a.placement === 'home_sidebar') ||
+    activeAds.find((a) => a.placement === 'home_top') ||
+    activeAds[0];
 
   // Trending articles
   const trendingArticles = [...articles]

@@ -14,6 +14,7 @@ import {
   getCurrentUser,
   setCurrentUser as setStoredCurrentUser,
   getAdvertisements,
+  recordAdClick,
   getRssSources,
   getImportedStories,
   getLiveStreamConfig,
@@ -184,13 +185,6 @@ export default function App() {
     // Initial URL sync for shared links
     syncRouteFromUrl(initialArticles);
 
-    // Check if URL has ?admin=login or hash
-    const query = window.location.search;
-    const hash = window.location.hash;
-    if (query.includes('admin=login') || query.includes('login=true') || hash === '#login') {
-      setIsAdminLoginOpen(true);
-    }
-
     // Handle browser Back / Forward buttons
     const handlePopState = () => {
       syncRouteFromUrl();
@@ -338,7 +332,17 @@ export default function App() {
   };
 
   const currentCategory = categories.find((c) => c.id === activeCategoryId);
-  const topAd = advertisements.find((a) => a.active && a.placement === 'home_top');
+
+  // Active Ads Selection: Prioritize custom/newly created ads over default placeholders
+  const activeAds = advertisements.filter((a) => a.active);
+  const isCustomAd = (a: Advertisement) => !['ad-1', 'ad-2', 'ad-3'].includes(a.id);
+  const topAd =
+    activeAds.find((a) => isCustomAd(a) && a.placement === 'home_top') ||
+    activeAds.find((a) => isCustomAd(a) && a.placement === 'mobile_banner') ||
+    activeAds.find((a) => isCustomAd(a)) ||
+    activeAds.find((a) => a.placement === 'home_top') ||
+    activeAds.find((a) => a.placement === 'mobile_banner') ||
+    activeAds[0];
 
   return (
     <div className={`min-h-screen flex flex-col bg-white text-[#202124] w-full max-w-full min-w-0 overflow-x-hidden ${viewMode !== 'admin' ? 'pb-16 md:pb-0' : ''}`}>
@@ -384,7 +388,6 @@ export default function App() {
             siteSettings={siteSettings}
             language={language}
             onToggleLanguage={handleToggleLanguage}
-            onOpenAdminLogin={() => setIsAdminLoginOpen(true)}
           />
 
           {/* Breaking News Ticker */}
@@ -404,13 +407,14 @@ export default function App() {
                 href={topAd.targetUrl}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="block overflow-hidden rounded-xs border border-neutral-200 hover:opacity-95 transition-opacity"
+                onClick={() => recordAdClick(topAd.id)}
+                className="block overflow-hidden rounded-xs border border-neutral-200 hover:opacity-95 transition-opacity bg-neutral-900"
               >
                 <img
                   src={topAd.imageUrl}
                   alt={topAd.title}
                   referrerPolicy="no-referrer"
-                  className="w-full max-h-24 sm:max-h-28 object-cover"
+                  className="w-full h-auto min-h-[60px] max-h-28 sm:max-h-36 object-cover"
                 />
               </a>
             </div>

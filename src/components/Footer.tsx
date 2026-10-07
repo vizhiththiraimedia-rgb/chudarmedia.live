@@ -1,7 +1,7 @@
 import React from 'react';
 import { Logo } from './Logo';
 import { Category, SiteSettings } from '../types';
-import { Mail, Phone, MapPin, ArrowUp, Lock } from 'lucide-react';
+import { Mail, Phone, MapPin, ArrowUp } from 'lucide-react';
 
 interface FooterProps {
   categories: Category[];
@@ -170,23 +170,17 @@ export const Footer: React.FC<FooterProps> = ({
         {/* Bottom Tier */}
         <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-500">
           <div className="flex flex-col sm:flex-row items-center gap-2 sm:gap-4 text-center sm:text-left">
-            <span>
+            <span
+              onDoubleClick={onOpenAdminLogin}
+              className="select-none"
+            >
               © {new Date().getFullYear()} CHUDAR MEDIA CINEMA. All rights reserved.
             </span>
             <span className="hidden sm:inline" aria-hidden="true">·</span>
             <span>பிரதம ஆசிரியர்: {siteSettings.editorInChief}</span>
           </div>
 
-          <div className="flex flex-wrap items-center justify-center gap-3">
-            <button
-              onClick={onOpenAdminLogin}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-neutral-900 hover:bg-neutral-800 text-neutral-300 hover:text-amber-400 border border-neutral-800 transition-colors cursor-pointer text-xs font-semibold shadow-xs"
-              title="Portal Login"
-            >
-              <Lock className="w-3.5 h-3.5 text-amber-400" />
-              <span>நிர்வாகி உள்நுழைவு (Admin Login)</span>
-            </button>
-
+          <div className="flex items-center gap-3">
             <button
               onClick={scrollToTop}
               className="flex items-center gap-1.5 px-3 py-1.5 rounded bg-neutral-900 hover:bg-[#C8102E] text-neutral-300 hover:text-white transition-colors cursor-pointer text-xs font-medium"

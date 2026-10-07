@@ -112,7 +112,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@chudarmedia.com"
+              placeholder="name@example.com"
               className="w-full px-3.5 py-2 text-xs border border-neutral-300 rounded font-medium focus:outline-none focus:border-[#C8102E]"
             />
           </div>
@@ -138,37 +138,6 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
             <span>உள்நுழைய (Sign In)</span>
             <ArrowRight className="w-3.5 h-3.5" />
           </button>
-
-          {/* Quick Demo/Admin Autofill Credentials */}
-          <div className="pt-2 border-t border-neutral-100">
-            <span className="text-[10px] text-neutral-400 font-semibold block mb-1.5 uppercase tracking-wider">
-              நிர்வாகி உள்நுழைவு விபரங்கள் (Quick Fill):
-            </span>
-            <div className="flex flex-col gap-1 text-[11px]">
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('admin@chudarmedia.com');
-                  setPassword('admin123');
-                }}
-                className="w-full text-left px-2.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded font-mono text-[11px] flex items-center justify-between cursor-pointer"
-              >
-                <span>admin@chudarmedia.com</span>
-                <span className="text-[#C8102E] font-bold">PW: admin123</span>
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  setEmail('vizhiththiraimedia@gmail.com');
-                  setPassword('admin123');
-                }}
-                className="w-full text-left px-2.5 py-1.5 bg-neutral-100 hover:bg-neutral-200 text-neutral-800 rounded font-mono text-[11px] flex items-center justify-between cursor-pointer"
-              >
-                <span>vizhiththiraimedia@gmail.com</span>
-                <span className="text-[#C8102E] font-bold">PW: admin123</span>
-              </button>
-            </div>
-          </div>
         </form>
       </div>
     </div>

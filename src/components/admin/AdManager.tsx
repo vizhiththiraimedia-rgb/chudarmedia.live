@@ -16,7 +16,7 @@ export const AdManager: React.FC<AdManagerProps> = ({
   const [showAddForm, setShowAddForm] = useState(false);
   const [title, setTitle] = useState('');
   const [clientName, setClientName] = useState('');
-  const [placement, setPlacement] = useState<AdPlacement>('home_sidebar');
+  const [placement, setPlacement] = useState<AdPlacement>('home_top');
   const [imageUrl, setImageUrl] = useState('');
   const [targetUrl, setTargetUrl] = useState('');
   const [startDate, setStartDate] = useState('2026-09-01');
@@ -137,18 +137,18 @@ export const AdManager: React.FC<AdManagerProps> = ({
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">
-                Banner Placement *
+                விளம்பரம் தெரியும் இடம் (Banner Placement) *
               </label>
               <select
                 value={placement}
                 onChange={(e) => setPlacement(e.target.value as AdPlacement)}
                 className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-medium"
               >
-                <option value="home_top">Homepage Top Leaderboard</option>
-                <option value="home_sidebar">Homepage Sidebar Promo Box</option>
-                <option value="article_sidebar">Article Sidebar Promo</option>
-                <option value="article_inline">In-Article Inline Billboard</option>
-                <option value="mobile_banner">Mobile Sticky Banner</option>
+                <option value="home_top">1. முகப்பு மேல் பேனர் (Homepage Top Leaderboard - முதன்மை பேனர்)</option>
+                <option value="mobile_banner">2. மொபைல் பேனர் (Mobile Banner)</option>
+                <option value="home_sidebar">3. முகப்பு பக்கவாட்டுப் பகுதி (Homepage Sidebar)</option>
+                <option value="article_inline">4. செய்திக் கட்டுரைக்குள் (In-Article Inline Billboard)</option>
+                <option value="article_sidebar">5. கட்டுரை பக்கவாட்டுப் பகுதி (Article Sidebar)</option>
               </select>
             </div>
             <div>
@@ -184,6 +184,19 @@ export const AdManager: React.FC<AdManagerProps> = ({
                 placeholder="https://..."
                 className="w-full px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-mono"
               />
+              {imageUrl.trim() && (
+                <div className="mt-2 p-2 bg-neutral-100 rounded border border-neutral-200">
+                  <span className="text-[10px] text-neutral-500 font-bold block mb-1">Image Preview:</span>
+                  <img
+                    src={imageUrl.trim()}
+                    alt="Ad Preview"
+                    onError={(e) => {
+                      (e.target as HTMLElement).style.display = 'none';
+                    }}
+                    className="max-h-24 w-full object-cover rounded bg-neutral-900"
+                  />
+                </div>
+              )}
             </div>
             <div>
               <label className="block text-xs font-semibold text-neutral-700 mb-1">

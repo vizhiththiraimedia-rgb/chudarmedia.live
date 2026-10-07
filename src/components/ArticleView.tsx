@@ -57,8 +57,14 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
   const [newCommentContent, setNewCommentContent] = useState('');
   const [commentSuccess, setCommentSuccess] = useState(false);
 
-  // In-article ad
-  const inlineAd = advertisements.find((a) => a.active && a.placement === 'article_inline');
+  // In-article ad (prioritizes newly created custom ads)
+  const isCustom = (a: any) => !['ad-1', 'ad-2', 'ad-3'].includes(a.id);
+  const activeAds = advertisements.filter((a) => a.active);
+  const inlineAd =
+    activeAds.find((a) => isCustom(a) && a.placement === 'article_inline') ||
+    activeAds.find((a) => isCustom(a)) ||
+    activeAds.find((a) => a.placement === 'article_inline') ||
+    activeAds[0];
 
   // Increment view count on mount
   useEffect(() => {

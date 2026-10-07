@@ -142,6 +142,32 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     }
   }, [videoTrailers]);
 
+  // Local advertisements state for instant updates
+  const [localAds, setLocalAds] = useState<Advertisement[]>(advertisements);
+  useEffect(() => {
+    setLocalAds(advertisements);
+  }, [advertisements]);
+
+  const handleSaveAd = (ad: Advertisement) => {
+    saveAdvertisement(ad);
+    setLocalAds((prev) => {
+      const idx = prev.findIndex((a) => a.id === ad.id);
+      if (idx >= 0) {
+        const copy = [...prev];
+        copy[idx] = ad;
+        return copy;
+      }
+      return [ad, ...prev];
+    });
+    showToast(`"${ad.title}" விளம்பரம் வெற்றிகரமாக சேமிக்கப்பட்டது! (Campaign saved)`);
+  };
+
+  const handleDeleteAd = (id: string) => {
+    deleteAdvertisement(id);
+    setLocalAds((prev) => prev.filter((a) => a.id !== id));
+    showToast('விளம்பரம் நீக்கப்பட்டது! (Campaign deleted)');
+  };
+
   const handleSaveTrailer = (trailer: VideoTrailer) => {
     saveVideoTrailer(trailer);
     setLocalTrailers((prev) => {
@@ -724,9 +750,9 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
             />
           ) : activeTab === 'ads' ? (
             <AdManager
-              advertisements={advertisements}
-              onSaveAd={saveAdvertisement}
-              onDeleteAd={deleteAdvertisement}
+              advertisements={localAds}
+              onSaveAd={handleSaveAd}
+              onDeleteAd={handleDeleteAd}
             />
           ) : activeTab === 'settings' ? (
             <SettingsManager
