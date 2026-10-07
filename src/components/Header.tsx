@@ -126,6 +126,19 @@ export const Header: React.FC<HeaderProps> = ({
               <span>{language === 'ta' ? 'சினி உலகம் சினிமா செய்திகள்' : 'Tamil & Global Cinema'}</span>
             </div>
 
+            {/* Admin Portal Login Link */}
+            {onOpenAdminLogin && (
+              <button
+                onClick={onOpenAdminLogin}
+                className="flex items-center gap-1 px-2 py-0.5 rounded text-neutral-300 hover:text-amber-300 hover:bg-neutral-800 transition-colors cursor-pointer text-xs font-semibold"
+                title="Admin Portal Login"
+              >
+                <Lock className="w-3 h-3 text-amber-400" />
+                <span className="hidden xs:inline">நிர்வாகி</span>
+                <span className="xs:hidden">Admin</span>
+              </button>
+            )}
+
             {/* Language Switcher */}
             <button
               onClick={onToggleLanguage}
@@ -257,11 +270,24 @@ export const Header: React.FC<HeaderProps> = ({
                 setMobileMenuOpen(false);
                 onOpenLiveTv();
               }}
-              className="w-full py-2.5 px-3 rounded bg-[#C8102E] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer"
+              className="w-full py-2.5 px-3 rounded bg-[#C8102E] text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer shadow-xs"
             >
               <Tv className="w-4 h-4" />
               <span>சுடர் டிவி நேரலை (LIVE TV)</span>
             </button>
+
+            {onOpenAdminLogin && (
+              <button
+                onClick={() => {
+                  setMobileMenuOpen(false);
+                  onOpenAdminLogin();
+                }}
+                className="w-full py-2.5 px-3 rounded bg-neutral-800 hover:bg-neutral-700 text-neutral-200 hover:text-white font-bold text-xs flex items-center justify-center gap-2 cursor-pointer border border-neutral-700 transition-colors shadow-xs"
+              >
+                <Lock className="w-4 h-4 text-amber-400" />
+                <span>ஆசிரியர் & நிர்வாகி உள்நுழைவு (Admin Login)</span>
+              </button>
+            )}
           </div>
         </div>
       )}

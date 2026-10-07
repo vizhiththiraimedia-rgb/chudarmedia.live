@@ -48,9 +48,12 @@ export const UserManager: React.FC<UserManagerProps> = ({
     setShowAddForm(false);
   };
 
+  const [notice, setNotice] = useState<string | null>(null);
+
   const toggleUserActive = (user: User) => {
     if (user.id === currentUser.id) {
-      alert('You cannot deactivate your current active account.');
+      setNotice('தற்போது உள்நுழைந்துள்ள உங்கள் சொந்த கணக்கை முடக்க முடியாது (You cannot deactivate your current active account).');
+      setTimeout(() => setNotice(null), 4000);
       return;
     }
     onSaveUser({ ...user, active: !user.active });
@@ -62,6 +65,11 @@ export const UserManager: React.FC<UserManagerProps> = ({
 
   return (
     <div className="space-y-6">
+      {notice && (
+        <div className="p-3 bg-amber-50 border border-amber-200 rounded text-amber-800 text-xs font-medium">
+          {notice}
+        </div>
+      )}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-3 border-b border-neutral-200">
         <div>
           <h2 className="text-lg font-bold text-neutral-900 flex items-center gap-2">

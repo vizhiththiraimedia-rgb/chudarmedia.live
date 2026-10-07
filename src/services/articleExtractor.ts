@@ -658,3 +658,147 @@ function parseRssFromDoc(doc: Document, feedUrl: string, feedName?: string): Liv
 
   return results;
 }
+
+/**
+ * Intelligent Cinema Article Formulator from Facebook Post Text & Multiple Images
+ * Crafts a sensational Tamil cinema headline, structured 3-paragraph news story,
+ * sets the primary image as Featured Image, and injects extra images into the story body.
+ */
+export function formulateCinemaArticleFromPostText(
+  postText: string,
+  images: string[],
+  optionalFbUrl?: string,
+  customCategory?: string
+): ExtractedArticle {
+  const cleanRaw = (postText || '').trim();
+  const rawLines = cleanRaw
+    .split('\n')
+    .map((l) => l.trim())
+    .filter((l) => l && !l.startsWith('#') && !l.startsWith('http://') && !l.startsWith('https://'));
+
+  // Clean hashtags from text for journalism tone
+  const cleanedText = cleanRaw
+    .replace(/#[\w\u0B80-\u0BFF]+/g, '')
+    .replace(/^[\s📸🎬🔥⚡️✨🎥📷\uD800-\uDBFF\uDC00-\uDFFF\-–—]+/, '')
+    .trim();
+
+  // 1. Generate Catchy Tamil Cinema Headline
+  let firstLine = rawLines[0] || '';
+  firstLine = firstLine
+    .replace(/^[\s📸🎬🔥⚡️✨🎥📷\uD800-\uDBFF\uDC00-\uDFFF\-–—]+/, '')
+    .replace(/\s*[-–|]\s*(Facebook|Chilli Chips|Page|Post).*$/i, '')
+    .replace(/#[\w\u0B80-\u0BFF]+/g, '')
+    .trim();
+
+  // Extract key movie / star names if found in text
+  const cinemaEntities = [
+    'தளபதி விஜய்', 'விஜய்', 'அஜித் குமார்', 'அஜித்', 'ரஜினிகாந்த்', 'ரஜினி', 'கமல்ஹாசன்', 'கமல்',
+    'சூர்யா', 'தனுஷ்', 'சிவகார்த்திகேயன்', 'விக்ரம்', 'சிலம்பரசன்', 'சிம்பு', 'விஜய் சேதுபதி',
+    'நயன்தாரா', 'சமந்தா', 'திரிஷா', 'கீர்த்தி சுரேஷ்', 'லோகேஷ் கனகராஜ்', 'நெல்சன்', 'அட்லீ',
+    'மணிரத்னம்', 'அனிருத்', 'ஏ.ஆர்.ரஹ்மான்', 'இளையராஜா', 'சந்தோஷ் நாராயணன்', 'ஹாரிஸ் ஜெயராஜ்',
+    'கூலி', 'GOAT', 'தளபதி 69', 'விடாமுயற்சி', 'கங்குவா', 'அமரன்', 'வேட்டையன்', 'இந்தியன் 2'
+  ];
+
+  let detectedStar = cinemaEntities.find((e) => cleanRaw.includes(e));
+
+  let formulatedTitle = '';
+  if (firstLine.length >= 15 && firstLine.length <= 85) {
+    if (firstLine.includes('‘') || firstLine.includes('"') || firstLine.includes('–') || firstLine.includes('—') || firstLine.includes(':')) {
+      formulatedTitle = firstLine;
+    } else {
+      formulatedTitle = `${firstLine} — பிரம்மாண்ட சினிமா அப்டேட்!`;
+    }
+  } else if (firstLine.length > 85) {
+    const splitMatch = firstLine.match(/^([^!.\n?]+[!.\n?])/);
+    formulatedTitle = splitMatch ? splitMatch[1].trim() : `${firstLine.slice(0, 80)}...`;
+  } else if (detectedStar) {
+    formulatedTitle = `${detectedStar} குறித்த முக்கிய சினிமா தகவல் — ரசிகர்கள் மத்தியில் வைரலாகும் பிரத்யேகப் பதிவு!`;
+  } else if (firstLine.length > 0) {
+    formulatedTitle = `${firstLine} — வைரலாகும் பிரத்யேக சினிமா பதிவு!`;
+  } else {
+    formulatedTitle = 'தமிழ் சினிமா சிறப்புச் செய்தி — வைரலாகும் பிரத்யேக புகைப்படத் தொகுப்பு';
+  }
+
+  // 2. Generate Crisp Summary
+  const secondLine = rawLines[1] || '';
+  const formulatedSummary = secondLine && secondLine.length > 20
+    ? secondLine.slice(0, 160)
+    : (cleanedText.slice(0, 160) || 'சமூக வலைத்தளங்களில் வெளியாகி சினிமா ரசிகர்கள் மத்தியில் பெரும் கவனத்தை ஈர்த்துள்ள முக்கிய திரைத் தகவல் மற்றும் புகைப்படத் தொகுப்பு.');
+
+  // 3. Images Management:
+  // Primary image = index 0 (Featured Image)
+  // Additional images = index 1, 2, ... (Injected into article content)
+  const primaryImage =
+    images[0] ||
+    'https://images.unsplash.com/photo-1489599849927-2ee91cede3ba?auto=format&fit=crop&w=1200&q=80';
+  const additionalImages = images.slice(1);
+
+  // 4. Formulate Full HTML News Content
+  const p1 = `<p>தமிழ் சினிமா உலக நிகழ்வுகள் மற்றும் கோலிவுட் திரையுலகில் ரசிகர்கள் மத்தியில் பெரும் எதிர்பார்ப்பை ஏற்படுத்தியுள்ள முக்கிய தகவலை சுடர் மீடியா சினிமா பிரிவு சிறப்புத் தொகுப்பாக இங்கே வழங்குகிறது.</p>`;
+
+  const p2 = `<div class="fb-post-highlight bg-neutral-100 p-4 border-l-4 border-[#C8102E] my-4 rounded-r-sm">
+  <p class="text-sm font-semibold text-neutral-800 leading-relaxed">${cleanedText || formulatedSummary}</p>
+</div>`;
+
+  // Gallery or embedded additional images
+  let extraImagesHtml = '';
+  if (additionalImages.length > 0) {
+    extraImagesHtml = `
+<div class="article-gallery my-6 space-y-4">
+  <h4 class="text-xs font-bold text-neutral-800 uppercase tracking-wider flex items-center gap-1.5 pb-2 border-b border-neutral-200">
+    <span>📸 பிரத்யேக புகைப்படத் தொகுப்பு (${additionalImages.length} படங்கள்):</span>
+  </h4>
+  <div class="grid grid-cols-1 ${additionalImages.length > 1 ? 'sm:grid-cols-2' : ''} gap-4">
+    ${additionalImages
+      .map(
+        (imgUrl, idx) => `
+      <figure class="rounded-xs overflow-hidden border border-neutral-200 shadow-2xs bg-neutral-900 group">
+        <img src="${imgUrl}" alt="புகைப்படக் காட்சி ${idx + 1}" class="w-full h-auto max-h-[460px] object-cover group-hover:scale-102 transition-transform duration-300" />
+        <figcaption class="p-2 text-[11px] text-neutral-300 bg-neutral-950 flex items-center justify-between">
+          <span>புகைப்படம் #${idx + 2}</span>
+          <span class="font-mono text-[10px] text-neutral-400">சுடர் மீடியா கேலரி</span>
+        </figcaption>
+      </figure>
+    `
+      )
+      .join('')}
+  </div>
+</div>`;
+  }
+
+  // Optional Facebook Interactive Embed if URL was provided
+  let fbEmbedHtml = '';
+  if (optionalFbUrl && (optionalFbUrl.includes('facebook.com') || optionalFbUrl.includes('fb.watch'))) {
+    const isVideo = optionalFbUrl.includes('/videos/') || optionalFbUrl.includes('/reel/') || optionalFbUrl.includes('/watch');
+    const embedType = isVideo ? 'video' : 'post';
+    const iframeSrc = `https://www.facebook.com/plugins/${embedType}.php?href=${encodeURIComponent(optionalFbUrl)}&show_text=true&width=500`;
+    fbEmbedHtml = `
+<div class="fb-embed-container my-6 flex flex-col items-center justify-center p-3 bg-neutral-900 rounded-lg shadow-md border border-neutral-800">
+  <div class="w-full max-w-[500px] overflow-hidden rounded bg-black">
+    <iframe src="${iframeSrc}" width="100%" height="${isVideo ? '450' : '520'}" style="border:none;overflow:hidden;min-height:380px;" scrolling="no" frameborder="0" allowfullscreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+  </div>
+  <span class="text-[11px] text-neutral-400 mt-2 block font-mono">அதிகாரப்பூர்வ முகநூல் பதிவு இயக்கம்</span>
+</div>`;
+  }
+
+  const p3 = `<p>திரைப்படக் குழுவினர் மற்றும் திரையுலகினர் மத்தியில் பேசப்பட்டு வரும் இந்நிகழ்வு குறித்த முழுமையான விபரங்கள் மற்றும் ரசிகர்களின் கருத்துக்கள் தொடர்ந்து இணையத்தில் பரவி வருகின்றன. சுடர் மீடியா சினிமா தளத்தில் தமிழ்த் திரைப்படங்களின் பிரத்யேக தகவல்கள் உடனுக்குடன் பதிவேற்றப்பட்டு வருகின்றன.</p>`;
+
+  const fullHtml = `${p1}\n\n${p2}\n\n${extraImagesHtml}\n\n${fbEmbedHtml}\n\n${p3}`;
+
+  return {
+    title: formulatedTitle,
+    subtitle: formulatedSummary.slice(0, 140),
+    summary: formulatedSummary,
+    content: fullHtml,
+    plainContent: htmlToPlainText(fullHtml),
+    image: primaryImage,
+    imageCaption: formulatedTitle,
+    source: 'சுடர் மீடியா சினிமா பிரிவு',
+    sourceUrl: optionalFbUrl || '',
+    author: 'சுடர் மீடியா ஆசிரியர் குழு',
+    publishedAt: new Date().toISOString(),
+    paragraphsCount: 3 + additionalImages.length,
+    wordCount: htmlToPlainText(fullHtml).split(/\s+/).filter(Boolean).length,
+    isRealFullArticle: true
+  };
+}

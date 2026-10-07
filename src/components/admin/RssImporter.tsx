@@ -19,7 +19,8 @@ import {
   Clock,
   CheckCircle2,
   BookOpen,
-  Image as ImageIcon
+  Image as ImageIcon,
+  Upload
 } from 'lucide-react';
 import { RssSource, ImportedStory, User, Article, Category } from '../../types';
 import {
@@ -29,7 +30,8 @@ import {
   LiveRssItem,
   htmlToPlainText,
   plainTextToHtml,
-  extractFacebookPostOrVideo
+  extractFacebookPostOrVideo,
+  formulateCinemaArticleFromPostText
 } from '../../services/articleExtractor';
 
 interface RssImporterProps {
@@ -53,6 +55,14 @@ export const RssImporter: React.FC<RssImporterProps> = ({
   onSaveDirectArticle,
   onEditArticle
 }) => {
+  // Importer Mode: 'easy_paste' (Copy-paste post & images) vs 'url_scraper' (Scrape website links)
+  const [importerTab, setImporterTab] = useState<'easy_paste' | 'url_scraper'>('easy_paste');
+  const [pastedPostText, setPastedPostText] = useState('');
+  const [pastedImages, setPastedImages] = useState<string[]>([]);
+  const [inputImageUrl, setInputImageUrl] = useState('');
+  const [optionalFbPostUrl, setOptionalFbPostUrl] = useState('');
+  const [isFormulatingPost, setIsFormulatingPost] = useState(false);
+
   // Direct URL Fetcher States
   const [fetchUrl, setFetchUrl] = useState('');
   const [fbCaption, setFbCaption] = useState('');
@@ -155,6 +165,98 @@ export const RssImporter: React.FC<RssImporterProps> = ({
       }
     } finally {
       setIsFetchingUrl(false);
+    }
+  };
+
+  // Easy Paste Action Handlers
+  const handlePasteClipboard = (e: React.ClipboardEvent) => {
+    const items = e.clipboardData?.items;
+    if (!items) return;
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf('image') !== -1) {
+        const file = items[i].getAsFile();
+        if (file) {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            const dataUrl = ev.target?.result as string;
+            if (dataUrl) {
+              setPastedImages((prev) => [...prev, dataUrl]);
+            }
+          };
+          reader.readAsDataURL(file);
+        }
+      }
+    }
+  };
+
+  const handleMakeFeatured = (index: number) => {
+    setPastedImages((prev) => {
+      if (index === 0 || !prev[index]) return prev;
+      const selected = prev[index];
+      const others = prev.filter((_, i) => i !== index);
+      return [selected, ...others];
+    });
+  };
+
+  const handleImageFiles = (files: FileList | null) => {
+    if (!files || files.length === 0) return;
+    Array.from(files).forEach((file) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const result = e.target?.result as string;
+        if (result) {
+          setPastedImages((prev) => [...prev, result]);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleAddImageUrl = () => {
+    const clean = inputImageUrl.trim();
+    if (!clean) return;
+    setPastedImages((prev) => [...prev, clean]);
+    setInputImageUrl('');
+  };
+
+  const handleRemoveImage = (index: number) => {
+    setPastedImages((prev) => prev.filter((_, i) => i !== index));
+  };
+
+  const handleFormulateFromPost = () => {
+    if (!pastedPostText.trim() && pastedImages.length === 0) {
+      setFetchError('தயவுசெய்து முகநூல் பதிவின் உரை அல்லது படங்களை உள்ளிடவும் (Please paste text or images)');
+      return;
+    }
+
+    setIsFormulatingPost(true);
+    setFetchError(null);
+
+    try {
+      const formulated = formulateCinemaArticleFromPostText(
+        pastedPostText,
+        pastedImages,
+        optionalFbPostUrl,
+        selectedCategory
+      );
+
+      setExtractedData(formulated);
+      setEditTitle(formulated.title);
+      setEditSummary(formulated.summary);
+      setEditContent(formulated.content);
+      setEditImage(formulated.image);
+      setFetchStatusStep('கட்டுரை வெற்றிகரமாக உருவாக்கப்பட்டது! (Auto-Formulated Successfully!)');
+
+      setTimeout(() => {
+        const previewEl = document.getElementById('extracted-preview-workspace');
+        if (previewEl) {
+          previewEl.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 150);
+    } catch (err: any) {
+      setFetchError('கட்டுரை உருவாக்குவதில் பிழை: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setIsFormulatingPost(false);
     }
   };
 
@@ -372,8 +474,230 @@ export const RssImporter: React.FC<RssImporterProps> = ({
         </div>
       )}
 
-      {/* 1. Live Article URL Fetcher (Real Full News Extractor) */}
-      <div className="bg-white border-2 border-neutral-800 rounded-sm p-5 shadow-sm">
+      {/* Mode Switcher Tabs */}
+      <div className="flex flex-wrap items-center gap-2 border-b-2 border-neutral-300 pb-2">
+        <button
+          type="button"
+          onClick={() => setImporterTab('easy_paste')}
+          className={`px-4 py-2.5 text-xs font-bold rounded-t-md flex items-center gap-2 cursor-pointer transition-all ${
+            importerTab === 'easy_paste'
+              ? 'bg-[#C8102E] text-white shadow-md'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          }`}
+        >
+          <Sparkles className="w-4 h-4 text-amber-300" />
+          <span>⭐ முகநூல் பதிவு & படங்கள் ➡️ ஆட்டோ-கட்டுரை (Easy Copy-Paste Studio)</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => setImporterTab('url_scraper')}
+          className={`px-4 py-2.5 text-xs font-bold rounded-t-md flex items-center gap-2 cursor-pointer transition-all ${
+            importerTab === 'url_scraper'
+              ? 'bg-[#C8102E] text-white shadow-md'
+              : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200'
+          }`}
+        >
+          <Globe className="w-4 h-4" />
+          <span>இணையதள URL ஸ்கிராப்பர் (Live Web Scraper)</span>
+        </button>
+      </div>
+
+      {/* MODE 1: Easy Copy-Paste Studio (As requested: Copy text + Copy/Upload images -> Auto Cinema Article) */}
+      {importerTab === 'easy_paste' && (
+        <div className="bg-white border-2 border-[#C8102E] rounded-sm p-5 shadow-sm space-y-5">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 pb-3 border-b border-neutral-200">
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="w-6 h-6 rounded-full bg-[#1877F2] text-white flex items-center justify-center font-bold text-xs">
+                  f
+                </span>
+                <h3 className="text-sm font-bold text-neutral-900">
+                  முகநூல் பதிவு & படங்கள் ➡️ சினிமா செய்தி ஆட்டோ-மேக்கர்
+                </h3>
+              </div>
+              <p className="text-xs text-neutral-500 mt-0.5">
+                API தேவையில்லை! Facebook-ல் உள்ள பதிவின் உரையையும் படங்களையும் இங்கே ஒட்டினால் (Paste), சிஸ்டமே சிறந்த தலைப்பு, 3 பத்திகள் கொண்ட முழு சினிமா கட்டுரை மற்றும் கேலரியை 1 வினாடியில் உருவாக்கிவிடும்!
+              </p>
+            </div>
+            <span className="text-[11px] font-mono text-emerald-800 bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shrink-0 font-bold">
+              ✓ 0 API Key Needed · 100% Guaranteed
+            </span>
+          </div>
+
+          {/* 1. Post Textarea */}
+          <div className="space-y-1.5">
+            <label className="text-xs font-bold text-neutral-800 flex items-center justify-between">
+              <span>1. Facebook பதிவின் உரையை இங்கே Paste செய்யவும்:</span>
+              <span className="text-[11px] text-neutral-500 font-medium bg-neutral-100 px-2 py-0.5 rounded">
+                Ctrl+V மூலம் படங்களையும் நேரடியாக ஒட்டலாம் (Paste images from clipboard)
+              </span>
+            </label>
+            <textarea
+              rows={5}
+              value={pastedPostText}
+              onChange={(e) => setPastedPostText(e.target.value)}
+              onPaste={handlePasteClipboard}
+              placeholder="Facebook பதிவில் உள்ள வாசகத்தை (Text / Caption) அப்படியே Copy செய்து இங்கே Paste செய்யவும்...
+எ.கா: தளபதி விஜய் நடிக்கும் புதிய திரைப்படத்தின் படப்பிடிப்பு குறித்த அதிகாரப்பூர்வ தகவல்..."
+              className="w-full px-3.5 py-2.5 text-xs sm:text-sm border border-neutral-300 rounded bg-white focus:outline-none focus:border-[#C8102E] text-neutral-900 leading-relaxed font-medium"
+            />
+          </div>
+
+          {/* 2. Image Manager (Multiple Images Support) */}
+          <div
+            onPaste={handlePasteClipboard}
+            className="space-y-2.5 p-3.5 bg-neutral-50 border border-neutral-200 rounded"
+          >
+            <label className="text-xs font-bold text-neutral-800 flex items-center justify-between flex-wrap gap-1">
+              <span className="flex items-center gap-1.5">
+                <ImageIcon className="w-4 h-4 text-[#C8102E]" />
+                <span>2. புகைப்படங்களைச் சேர்க்கவும் (ஒன்று அல்லது பல படங்கள்):</span>
+              </span>
+              <span className="text-[11px] text-blue-800 bg-blue-100 px-2.5 py-0.5 rounded font-bold">
+                ⭐ 1-வது படம் = முகப்பு படம் · மற்றவை = செய்திக்குள் கீழே வரும் படங்கள்
+              </span>
+            </label>
+
+            {/* Upload Buttons & URL Input */}
+            <div className="flex flex-col sm:flex-row gap-2 items-center">
+              <label className="w-full sm:w-auto px-4 py-2 bg-white hover:bg-neutral-100 border border-neutral-300 rounded text-xs font-bold text-neutral-800 flex items-center justify-center gap-2 cursor-pointer shadow-2xs shrink-0 transition-colors">
+                <Upload className="w-4 h-4 text-[#C8102E]" />
+                <span>மொபைல் / கணினியிலிருந்து படங்களை ஏற்று (Upload)</span>
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={(e) => handleImageFiles(e.target.files)}
+                  className="hidden"
+                />
+              </label>
+
+              <span className="text-xs text-neutral-400 hidden sm:inline">அல்லது</span>
+
+              <div className="flex-1 w-full flex gap-1">
+                <input
+                  type="url"
+                  value={inputImageUrl}
+                  onChange={(e) => setInputImageUrl(e.target.value)}
+                  onPaste={handlePasteClipboard}
+                  placeholder="படத்தின் நேரடி URL இணைப்பு அல்லது Paste செய்யவும் (Ctrl+V)..."
+                  className="flex-1 px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white focus:outline-none focus:border-[#C8102E]"
+                />
+                <button
+                  type="button"
+                  onClick={handleAddImageUrl}
+                  className="px-3.5 py-1.5 bg-neutral-800 hover:bg-neutral-900 text-white text-xs font-bold rounded cursor-pointer shrink-0"
+                >
+                  + சேர்
+                </button>
+              </div>
+            </div>
+
+            {/* Display Attached Images List */}
+            {pastedImages.length > 0 && (
+              <div className="pt-2">
+                <div className="flex items-center justify-between mb-2">
+                  <span className="text-[11px] font-bold text-neutral-700">
+                    இணைக்கப்பட்ட படங்கள் ({pastedImages.length}):
+                  </span>
+                  <span className="text-[10px] text-neutral-500 italic">
+                    (படத்தை முதன்மைப்படுத்த 'முகப்புப் படமாக்கு' பொத்தானை அழுத்தவும்)
+                  </span>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-6 gap-2.5">
+                  {pastedImages.map((img, idx) => (
+                    <div
+                      key={idx}
+                      className={`relative group border-2 rounded overflow-hidden bg-neutral-900 aspect-16/10 shadow-xs ${
+                        idx === 0 ? 'border-[#C8102E] ring-2 ring-red-200' : 'border-neutral-300'
+                      }`}
+                    >
+                      <img src={img} alt={`Preview ${idx + 1}`} className="w-full h-full object-cover" />
+                      <div className="absolute top-1 left-1 flex flex-col gap-1 items-start">
+                        <span
+                          className={`text-[9px] font-black px-1.5 py-0.5 rounded text-white shadow-md ${
+                            idx === 0 ? 'bg-[#C8102E]' : 'bg-neutral-900/90'
+                          }`}
+                        >
+                          {idx === 0 ? '⭐ முகப்பு படம்' : `📸 படம் #${idx + 1}`}
+                        </span>
+                        {idx > 0 && (
+                          <button
+                            type="button"
+                            onClick={() => handleMakeFeatured(idx)}
+                            className="text-[8px] font-bold px-1.5 py-0.5 bg-amber-400 hover:bg-amber-300 text-neutral-950 rounded shadow-sm cursor-pointer"
+                            title="இப்படத்தை முதல் படமாக மாற்று"
+                          >
+                            ⭐ 1-வது ஆக்கு
+                          </button>
+                        )}
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveImage(idx)}
+                        className="absolute top-1 right-1 p-1 bg-red-600 hover:bg-red-700 text-white rounded-full cursor-pointer shadow-md"
+                        title="Remove image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* 3. Optional Facebook Link & Category */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div>
+              <label className="text-[11px] font-bold text-neutral-700 block mb-1">
+                3. Facebook பதிவு லிங்க் (விருப்பத்திற்கு மட்டும் - Player இணைக்க):
+              </label>
+              <input
+                type="url"
+                value={optionalFbPostUrl}
+                onChange={(e) => setOptionalFbPostUrl(e.target.value)}
+                placeholder="https://www.facebook.com/share/p/..."
+                className="w-full px-3 py-2 text-xs border border-neutral-300 rounded bg-white focus:outline-none focus:border-[#C8102E]"
+              />
+            </div>
+
+            <div>
+              <label className="text-[11px] font-bold text-neutral-700 block mb-1">
+                4. சினிமா பிரிவு (Category):
+              </label>
+              <select
+                value={selectedCategory}
+                onChange={(e) => setSelectedCategory(e.target.value)}
+                className="w-full px-3 py-2 text-xs border border-neutral-300 rounded bg-white focus:outline-none focus:border-[#C8102E] font-medium"
+              >
+                {categories.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.nameTa} ({c.nameEn})
+                  </option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Big Auto-Formulate Action Button */}
+          <button
+            type="button"
+            disabled={isFormulatingPost}
+            onClick={handleFormulateFromPost}
+            className="w-full py-3 bg-[#C8102E] hover:bg-[#a50d25] text-white text-sm font-bold rounded-sm shadow-md cursor-pointer transition-all flex items-center justify-center gap-2"
+          >
+            <Sparkles className="w-5 h-5 text-amber-300" />
+            <span>தானாகவே கவர்ச்சிகரமான சினிமா கட்டுரையை உருவாக்கு (Auto-Formulate Cinema News Now)</span>
+          </button>
+        </div>
+      )}
+
+      {/* MODE 2: Live Article URL Fetcher (Real Full News Extractor) */}
+      {importerTab === 'url_scraper' && (
+        <>
+          <div className="bg-white border-2 border-neutral-800 rounded-sm p-5 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-3">
           <div className="flex items-center gap-2">
             <Sparkles className="w-4 h-4 text-[#C8102E]" />
@@ -595,239 +919,6 @@ export const RssImporter: React.FC<RssImporterProps> = ({
             [Dinamani Live News]
           </button>
         </div>
-
-        {/* Fetched Full Real Article Preview & Publishing Workspace */}
-        {extractedData && (
-          <div className="mt-6 p-5 bg-neutral-50 border-2 border-neutral-300 rounded space-y-4">
-            {/* Real Article Extraction Stats Badge */}
-            <div className="flex flex-wrap items-center justify-between gap-2 pb-3 border-b border-neutral-200">
-              <div className="flex items-center gap-2">
-                <span className="text-xs font-bold text-emerald-800 bg-emerald-100 border border-emerald-300 px-2.5 py-0.5 rounded flex items-center gap-1.5">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-700" />
-                  <span>Real Full Article Extracted! (உண்மையான முழு செய்தி பெறப்பட்டது)</span>
-                </span>
-                <span className="text-xs font-mono text-neutral-600 bg-white px-2 py-0.5 rounded border border-neutral-200">
-                  {extractedData.paragraphsCount} பத்திகள் • {extractedData.wordCount} வார்த்தைகள்
-                </span>
-              </div>
-              <a
-                href={extractedData.sourceUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-xs text-[#C8102E] hover:underline font-mono flex items-center gap-1"
-              >
-                <span>மூலம்: {extractedData.source}</span>
-                <ExternalLink className="w-3 h-3" />
-              </a>
-            </div>
-
-            {/* Preview Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-neutral-200 pb-2">
-              <button
-                type="button"
-                onClick={() => setPreviewMode('preview')}
-                className={`px-3 py-1 text-xs font-bold rounded cursor-pointer ${
-                  previewMode === 'preview'
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-                }`}
-              >
-                Article Preview (முன்னோட்டம்)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode('edit')}
-                className={`px-3 py-1 text-xs font-bold rounded cursor-pointer ${
-                  previewMode === 'edit'
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-                }`}
-              >
-                Quick Edit Content (உரையைத் திருத்து)
-              </button>
-              <button
-                type="button"
-                onClick={() => setPreviewMode('html')}
-                className={`px-3 py-1 text-xs font-bold rounded cursor-pointer ${
-                  previewMode === 'html'
-                    ? 'bg-neutral-900 text-white'
-                    : 'bg-neutral-200 text-neutral-700 hover:bg-neutral-300'
-                }`}
-              >
-                HTML Source View
-              </button>
-            </div>
-
-            {/* TAB 1: Real Visual Preview */}
-            {previewMode === 'preview' && (
-              <div className="bg-white p-5 rounded border border-neutral-300 space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-12 gap-5">
-                  <div className="md:col-span-4">
-                    <img
-                      src={editImage || extractedData.image}
-                      alt={editTitle || extractedData.title}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-44 object-cover rounded border border-neutral-200 shadow-xs"
-                    />
-                    <div className="mt-1 text-[10px] text-neutral-400 truncate">
-                      {extractedData.source} • {new Date(extractedData.publishedAt).toLocaleDateString()}
-                    </div>
-                  </div>
-                  <div className="md:col-span-8 space-y-2">
-                    <h3 className="text-base font-bold text-neutral-900 font-serif-tamil leading-snug">
-                      {editTitle}
-                    </h3>
-                    <p className="text-xs text-neutral-600 italic bg-neutral-50 p-2.5 rounded border border-neutral-200">
-                      {editSummary}
-                    </p>
-                  </div>
-                </div>
-
-                {/* The Full Paragraphs Body */}
-                <div className="pt-4 border-t border-neutral-200">
-                  <h4 className="text-xs font-bold uppercase tracking-wider text-neutral-500 mb-3 flex items-center gap-1.5">
-                    <BookOpen className="w-3.5 h-3.5 text-[#C8102E]" />
-                    <span>முழுச் செய்திப் பத்திகள் (Full Article Content):</span>
-                  </h4>
-                  <div
-                    className="prose prose-sm max-w-none text-neutral-800 text-xs sm:text-sm leading-relaxed space-y-3 bg-neutral-50 p-4 rounded border border-neutral-200 max-h-96 overflow-y-auto"
-                    dangerouslySetInnerHTML={{ __html: editContent }}
-                  />
-                </div>
-              </div>
-            )}
-
-            {/* TAB 2: Quick Edit Fields */}
-            {previewMode === 'edit' && (
-              <div className="bg-white p-5 rounded border border-neutral-300 space-y-4 text-xs">
-                <div>
-                  <label className="block font-bold text-neutral-700 uppercase mb-1">Headline (தலைப்பு):</label>
-                  <input
-                    type="text"
-                    value={editTitle}
-                    onChange={(e) => setEditTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded font-semibold text-neutral-900"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-neutral-700 uppercase mb-1">Summary (சுருக்கம்):</label>
-                  <textarea
-                    rows={2}
-                    value={editSummary}
-                    onChange={(e) => setEditSummary(e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded text-neutral-800"
-                  />
-                </div>
-
-                <div>
-                  <label className="block font-bold text-neutral-700 uppercase mb-1">
-                    Featured Image URL (புகைப்பட இணைப்பு):
-                  </label>
-                  <input
-                    type="url"
-                    value={editImage}
-                    onChange={(e) => setEditImage(e.target.value)}
-                    className="w-full px-3 py-2 border border-neutral-300 rounded text-neutral-800 font-mono text-[11px]"
-                  />
-                </div>
-
-                <div>
-                  <div className="flex items-center justify-between mb-1">
-                    <label className="block font-bold text-neutral-700 uppercase">
-                      முழு செய்திப் பத்திகள் (Article Content):
-                    </label>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const clean = htmlToPlainText(editContent);
-                        setEditContent(plainTextToHtml(clean));
-                      }}
-                      className="text-[11px] font-semibold text-[#C8102E] hover:underline flex items-center gap-1 cursor-pointer"
-                    >
-                      <Sparkles className="w-3 h-3" />
-                      <span>HTML நீக்கி எளிய உரையாக்கு (Strip HTML)</span>
-                    </button>
-                  </div>
-                  <textarea
-                    rows={10}
-                    value={htmlToPlainText(editContent)}
-                    onChange={(e) => setEditContent(plainTextToHtml(e.target.value))}
-                    placeholder="செய்திப் பத்திகளை சாதாரணமாக எழுதவும்..."
-                    className="w-full px-3 py-2 border border-neutral-300 rounded text-neutral-800 text-xs sm:text-sm leading-relaxed font-serif-tamil focus:outline-none focus:border-[#C8102E]"
-                  />
-                  <p className="text-[11px] text-neutral-500 mt-1">
-                    💡 HTML குறியீடுகள் இன்றி சாதாரண தமிழ் வரிகளாக எளிதாக திருத்தலாம்.
-                  </p>
-                </div>
-              </div>
-            )}
-
-            {/* TAB 3: Raw HTML view */}
-            {previewMode === 'html' && (
-              <div className="bg-neutral-900 text-neutral-200 p-4 rounded font-mono text-[11px] max-h-72 overflow-y-auto">
-                <pre className="whitespace-pre-wrap">{editContent}</pre>
-              </div>
-            )}
-
-            {/* Category selection and Publishing controls */}
-            <div className="pt-3 border-t border-neutral-200 flex flex-wrap items-center justify-between gap-3 text-xs">
-              <div className="flex flex-wrap items-center gap-4">
-                <div>
-                  <label className="font-bold text-neutral-700 mr-2">Assign Category:</label>
-                  <select
-                    value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="px-3 py-1.5 text-xs border border-neutral-300 rounded bg-white font-medium"
-                  >
-                    {categories.filter((c) => c.id !== 'all').map((cat) => (
-                      <option key={cat.id} value={cat.id}>
-                        {cat.nameEn} ({cat.nameTa})
-                      </option>
-                    ))}
-                  </select>
-                </div>
-
-                <label className="flex items-center gap-1.5 cursor-pointer font-bold text-[#C8102E]">
-                  <input
-                    type="checkbox"
-                    checked={addChudarBranding}
-                    onChange={(e) => setAddChudarBranding(e.target.checked)}
-                    className="rounded text-[#C8102E]"
-                  />
-                  <span>Attach Chudar Media Branding & Source Attribution</span>
-                </label>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={handleOpenInFullEditor}
-                  className="px-3 py-2 bg-neutral-800 hover:bg-neutral-900 text-white text-xs font-bold rounded cursor-pointer flex items-center gap-1.5"
-                >
-                  <Edit2 className="w-3.5 h-3.5" />
-                  <span>Open in Full Article Editor</span>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePostFetched('draft')}
-                  className="px-4 py-2 bg-neutral-200 hover:bg-neutral-300 text-neutral-800 text-xs font-bold rounded cursor-pointer"
-                >
-                  Save as Draft
-                </button>
-                <button
-                  type="button"
-                  onClick={() => handlePostFetched('published')}
-                  className="px-5 py-2 bg-[#C8102E] hover:bg-[#a50d25] text-white text-xs font-bold rounded cursor-pointer shadow-xs flex items-center gap-1.5"
-                >
-                  <Send className="w-3.5 h-3.5" />
-                  <span>Publish to Chudar Media Now</span>
-                </button>
-              </div>
-            </div>
-          </div>
-        )}
       </div>
 
       {/* 2. Real Live RSS Feeds Sync & Feed Queue */}
@@ -1014,6 +1105,8 @@ export const RssImporter: React.FC<RssImporterProps> = ({
           })}
         </div>
       </div>
+        </>
+      )}
     </div>
   );
 };

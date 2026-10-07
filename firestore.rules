@@ -31,6 +31,42 @@ service cloud.firestore {
       allow write: if true;
     }
 
+    // Video Trailers: Public can read; allow write
+    match /video_trailers/{trailerId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Media Library: Public can read; allow write
+    match /media/{mediaId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Advertisements: Public can read; allow write
+    match /ads/{adId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Users & Staff: Allow read and write for app accounts
+    match /users/{userId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // RSS Sources: Allow read and write
+    match /rss_sources/{sourceId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Imported Stories: Allow read and write
+    match /imported_stories/{storyId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
     // Connection test document
     match /test/{testId} {
       allow read, write: if true;

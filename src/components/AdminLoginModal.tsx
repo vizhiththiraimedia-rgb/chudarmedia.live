@@ -63,7 +63,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
 
   return (
     <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-xs flex items-center justify-center p-4">
-      <div className="relative w-full max-w-md bg-white rounded-lg shadow-2xl overflow-hidden border border-neutral-200 animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full max-w-md max-h-[92vh] flex flex-col bg-white rounded-lg shadow-2xl overflow-hidden border border-neutral-200 animate-in fade-in zoom-in-95 duration-200">
         {/* Header */}
         <div className="bg-[#111111] text-white p-5 flex items-center justify-between">
           <div className="flex items-center gap-3">
@@ -90,7 +90,7 @@ export const AdminLoginModal: React.FC<AdminLoginModalProps> = ({
         </div>
 
         {/* Secure Login Form */}
-        <form onSubmit={handleLogin} className="p-6 space-y-4">
+        <form onSubmit={handleLogin} className="p-5 sm:p-6 space-y-3.5 sm:space-y-4 overflow-y-auto flex-1">
           <div className="flex items-center gap-2 p-3 bg-neutral-50 rounded border border-neutral-200 text-neutral-600 text-xs">
             <ShieldCheck className="w-4 h-4 text-[#C8102E] shrink-0" />
             <span>அங்கீகரிக்கப்பட்ட செய்தி ஆசிரியர்கள் மற்றும் நிர்வாகிகளுக்கு மட்டுமே.</span>

@@ -140,8 +140,13 @@ export default function App() {
     }
 
     // 3. Check Admin
-    if (searchParams.get('admin') === 'true' || hash === '#admin') {
-      setViewMode('admin');
+    if (searchParams.get('admin') === 'true' || searchParams.has('admin') || hash === '#admin' || hash === '#login') {
+      const user = getCurrentUser();
+      if (user) {
+        setViewMode('admin');
+      } else {
+        setIsAdminLoginOpen(true);
+      }
       return;
     }
 

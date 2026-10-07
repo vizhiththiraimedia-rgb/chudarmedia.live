@@ -84,6 +84,25 @@ function setItem<T>(key: string, value: T): void {
   }
 }
 
+/**
+ * Deeply strips undefined properties from an object so Firestore setDoc never throws
+ * "Unsupported field value: undefined" errors.
+ */
+export function cleanForFirestore<T extends Record<string, any>>(obj: T): Record<string, any> {
+  const cleaned: Record<string, any> = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (value === undefined) {
+      continue;
+    }
+    if (value !== null && typeof value === 'object' && !Array.isArray(value)) {
+      cleaned[key] = cleanForFirestore(value);
+    } else {
+      cleaned[key] = value;
+    }
+  }
+  return cleaned;
+}
+
 let isFirestoreSyncActive = false;
 
 export function initializeStore() {
@@ -118,16 +137,40 @@ export function initializeStore() {
             const data = docSnap.data() as Article;
             cloudArticles.push(data);
           });
-          cloudArticles.sort(
+
+          // Smart merge: keep local articles that may not yet have synced to cloud
+          const localArticles = getItem<Article[]>(STORAGE_KEYS.ARTICLES, []);
+          const mergedMap = new Map<string, Article>();
+
+          cloudArticles.forEach((art) => mergedMap.set(art.id, art));
+
+          localArticles.forEach((localArt) => {
+            const cloudArt = mergedMap.get(localArt.id);
+            if (!cloudArt) {
+              // Local article exists only locally - preserve and push to Firestore
+              mergedMap.set(localArt.id, localArt);
+              setDoc(doc(db, 'articles', localArt.id), cleanForFirestore(localArt)).catch(console.warn);
+            } else {
+              const localTime = new Date(localArt.updatedAt || localArt.publishedAt).getTime();
+              const cloudTime = new Date(cloudArt.updatedAt || cloudArt.publishedAt).getTime();
+              if (localTime > cloudTime) {
+                mergedMap.set(localArt.id, localArt);
+                setDoc(doc(db, 'articles', localArt.id), cleanForFirestore(localArt)).catch(console.warn);
+              }
+            }
+          });
+
+          const finalArticles = Array.from(mergedMap.values()).map(sanitizeArticle);
+          finalArticles.sort(
             (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
           );
-          localStorage.setItem(STORAGE_KEYS.ARTICLES, JSON.stringify(cloudArticles));
+          localStorage.setItem(STORAGE_KEYS.ARTICLES, JSON.stringify(finalArticles));
           notify();
         } else {
           // If Firestore collection is empty, seed initial articles to Firestore
           const currentArticles = getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
           currentArticles.forEach((art) => {
-            setDoc(doc(db, 'articles', art.id), art).catch((e) =>
+            setDoc(doc(db, 'articles', art.id), cleanForFirestore(art)).catch((e) =>
               console.warn('Seed article failed:', e)
             );
           });
@@ -215,6 +258,40 @@ export function initializeStore() {
     } catch (e) {
       console.warn('Firestore site_settings setup error:', e);
     }
+
+    // 6. Sync Video Trailers collection
+    try {
+      onSnapshot(collection(db, 'video_trailers'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudTrailers: VideoTrailer[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudTrailers.push(docSnap.data() as VideoTrailer);
+          });
+          const localTrailers = getItem<VideoTrailer[]>(STORAGE_KEYS.VIDEO_TRAILERS, []);
+          const merged = new Map<string, VideoTrailer>();
+          cloudTrailers.forEach((t) => merged.set(t.id, t));
+          localTrailers.forEach((t) => {
+            if (!merged.has(t.id)) {
+              merged.set(t.id, t);
+              setDoc(doc(db, 'video_trailers', t.id), cleanForFirestore(t)).catch(console.warn);
+            }
+          });
+          const list = Array.from(merged.values());
+          list.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+          localStorage.setItem(STORAGE_KEYS.VIDEO_TRAILERS, JSON.stringify(list));
+          notify();
+        } else {
+          const currentTrailers = getItem<VideoTrailer[]>(STORAGE_KEYS.VIDEO_TRAILERS, INITIAL_VIDEO_TRAILERS);
+          currentTrailers.forEach((t) => {
+            setDoc(doc(db, 'video_trailers', t.id), cleanForFirestore(t)).catch(console.warn);
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore video_trailers sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore video_trailers setup error:', e);
+    }
   }
 }
 
@@ -273,19 +350,24 @@ export function saveArticle(article: Article): Article {
   const sanitized = sanitizeArticle(article);
   const articles = getArticles();
   const index = articles.findIndex((a) => a.id === sanitized.id);
+  const toSave: Article = {
+    ...sanitized,
+    updatedAt: new Date().toISOString()
+  };
   if (index >= 0) {
-    articles[index] = { ...sanitized, updatedAt: new Date().toISOString() };
+    articles[index] = toSave;
   } else {
-    articles.unshift(sanitized);
+    articles.unshift(toSave);
   }
   setItem(STORAGE_KEYS.ARTICLES, articles);
 
-  // Sync to Cloud Firestore
-  setDoc(doc(db, 'articles', sanitized.id), sanitized).catch((err) => {
+  // Sync to Cloud Firestore (cleaning undefined properties)
+  const cleanedData = cleanForFirestore(toSave);
+  setDoc(doc(db, 'articles', toSave.id), cleanedData).catch((err) => {
     console.warn('Error saving article to Firestore:', err);
   });
 
-  return sanitized;
+  return toSave;
 }
 
 export function deleteArticle(id: string): void {
@@ -322,7 +404,7 @@ export function saveCategory(category: Category): void {
     categories.push(category);
   }
   setItem(STORAGE_KEYS.CATEGORIES, categories);
-  setDoc(doc(db, 'categories', category.id), category).catch(console.warn);
+  setDoc(doc(db, 'categories', category.id), cleanForFirestore(category)).catch(console.warn);
 }
 
 export function deleteCategory(id: string): void {
@@ -345,7 +427,7 @@ export function saveBreakingNews(item: BreakingNews): void {
     list.unshift(item);
   }
   setItem(STORAGE_KEYS.BREAKING_NEWS, list);
-  setDoc(doc(db, 'breaking_news', item.id), item).catch(console.warn);
+  setDoc(doc(db, 'breaking_news', item.id), cleanForFirestore(item)).catch(console.warn);
 }
 
 export function deleteBreakingNews(id: string): void {
@@ -373,7 +455,7 @@ export function addComment(comment: Omit<Comment, 'id' | 'createdAt' | 'likes'>)
   };
   comments.unshift(newComment);
   setItem(STORAGE_KEYS.COMMENTS, comments);
-  setDoc(doc(db, 'comments', newComment.id), newComment).catch(console.warn);
+  setDoc(doc(db, 'comments', newComment.id), cleanForFirestore(newComment)).catch(console.warn);
   return newComment;
 }
 
@@ -612,7 +694,7 @@ export function getSiteSettings(): SiteSettings {
 
 export function updateSiteSettings(settings: SiteSettings): void {
   setItem(STORAGE_KEYS.SITE_SETTINGS, settings);
-  setDoc(doc(db, 'site_settings', 'global'), settings).catch(console.warn);
+  setDoc(doc(db, 'site_settings', 'global'), cleanForFirestore(settings)).catch(console.warn);
 }
 
 // Video Trailers API
@@ -629,11 +711,13 @@ export function saveVideoTrailer(trailer: VideoTrailer): void {
     trailers.unshift(trailer);
   }
   setItem(STORAGE_KEYS.VIDEO_TRAILERS, trailers);
+  setDoc(doc(db, 'video_trailers', trailer.id), cleanForFirestore(trailer)).catch(console.warn);
 }
 
 export function deleteVideoTrailer(id: string): void {
   const trailers = getVideoTrailers().filter((v) => v.id !== id);
   setItem(STORAGE_KEYS.VIDEO_TRAILERS, trailers);
+  deleteDoc(doc(db, 'video_trailers', id)).catch(console.warn);
 }
 
 export function reorderVideoTrailers(trailers: VideoTrailer[]): void {

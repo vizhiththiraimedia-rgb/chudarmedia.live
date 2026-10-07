@@ -50,6 +50,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   const [subtitleEn, setSubtitleEn] = useState(initialArticle?.subtitleEn || '');
   const [categoryId, setCategoryId] = useState(initialArticle?.categoryId || 'kollywood');
   const [summary, setSummary] = useState(initialArticle?.summary || '');
+  const [validationError, setValidationError] = useState<string | null>(null);
   
   // Content and Editor Modes: 'visual' (WYSIWYG), 'plain' (Clean text paragraphs), 'html' (Source)
   const [content, setContent] = useState(initialArticle?.content || '');
@@ -165,13 +166,15 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
     if (tag === 'p') setContent((prev) => prev + '\n<p>புதிய பத்தி...</p>\n');
   };
 
-  const handleFormSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleFormSubmit = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
 
     if (!title.trim() || !summary.trim()) {
-      alert('Please fill in both the title and summary.');
+      setValidationError('தயவுசெய்து தலைப்பு மற்றும் சுருக்க விவரத்தை நிரப்பவும் (Please fill in both the title and summary).');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
+    setValidationError(null);
 
     const tags = tagsStr.split(',').map((t) => t.trim()).filter(Boolean);
     const slug = initialArticle?.slug || title.toLowerCase().replace(/[^a-z0-9]+/g, '-').slice(0, 50) || `cinema-${Date.now()}`;
@@ -279,7 +282,7 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
   return (
     <div className="bg-white border border-neutral-200 rounded-sm p-5 sm:p-7 shadow-xs">
       {/* Top Header */}
-      <div className="flex flex-wrap items-center justify-between gap-4 pb-4 mb-6 border-b border-neutral-200">
+      <div className="flex flex-wrap items-center justify-between gap-3 pb-4 mb-6 border-b border-neutral-200">
         <button
           type="button"
           onClick={onCancel}
@@ -289,15 +292,35 @@ export const ArticleEditor: React.FC<ArticleEditorProps> = ({
           <span>Back to Articles</span>
         </button>
 
-        <button
-          type="button"
-          onClick={() => setPreviewMode(!previewMode)}
-          className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
-        >
-          <Eye className="w-4 h-4 text-neutral-500" />
-          <span>{previewMode ? 'Back to Editor' : 'Preview Article'}</span>
-        </button>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setPreviewMode(!previewMode)}
+            className="flex items-center gap-1.5 px-3 py-1.5 rounded border border-neutral-300 text-xs font-semibold text-neutral-700 hover:bg-neutral-50 cursor-pointer"
+          >
+            <Eye className="w-4 h-4 text-neutral-500" />
+            <span>{previewMode ? 'Back to Editor' : 'Preview Article'}</span>
+          </button>
+
+          {!previewMode && (
+            <button
+              type="button"
+              onClick={() => handleFormSubmit()}
+              className="flex items-center gap-1.5 px-4 py-1.5 rounded bg-[#C8102E] hover:bg-[#a50d25] text-white text-xs font-bold transition-colors cursor-pointer shadow-xs"
+            >
+              <Save className="w-3.5 h-3.5" />
+              <span>{isEditing ? 'Save Changes' : 'Publish Article'}</span>
+            </button>
+          )}
+        </div>
       </div>
+
+      {validationError && (
+        <div className="mb-5 p-3.5 bg-red-50 border border-red-200 rounded text-red-700 text-xs flex items-center gap-2">
+          <AlertCircle className="w-4 h-4 shrink-0 text-red-600" />
+          <span>{validationError}</span>
+        </div>
+      )}
 
       {previewMode ? (
         <div className="border border-neutral-200 p-6 rounded bg-neutral-50">

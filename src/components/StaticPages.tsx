@@ -15,6 +15,7 @@ export const StaticPages: React.FC<StaticPagesProps> = ({
   onBack,
   language
 }) => {
+  const [contactSent, setContactSent] = React.useState(false);
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       {/* Back button */}
@@ -171,23 +172,30 @@ export const StaticPages: React.FC<StaticPagesProps> = ({
             {/* Quick Contact Form */}
             <div className="bg-neutral-50 p-5 rounded border border-neutral-200">
               <h3 className="font-bold text-sm text-neutral-900 mb-3">செய்தி அல்லது தகவல் அனுப்ப</h3>
-              <form onSubmit={(e) => { e.preventDefault(); alert('உங்கள் செய்தி ஆசிரியர் குழுவுக்கு அனுப்பப்பட்டது. நன்றி!'); }} className="space-y-3 text-xs">
-                <div>
-                  <label className="block text-neutral-600 font-medium mb-1">பெயர்</label>
-                  <input required type="text" placeholder="உங்கள் பெயர்" className="w-full p-2 border border-neutral-300 rounded bg-white" />
+              {contactSent ? (
+                <div className="p-4 bg-emerald-50 border border-emerald-200 rounded text-emerald-800 text-xs font-semibold flex items-center gap-2">
+                  <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+                  <span>உங்கள் செய்தி ஆசிரியர் குழுவுக்கு வெற்றிகரமாக அனுப்பப்பட்டது. நன்றி!</span>
                 </div>
-                <div>
-                  <label className="block text-neutral-600 font-medium mb-1">மின்னஞ்சல்</label>
-                  <input required type="email" placeholder="email@example.com" className="w-full p-2 border border-neutral-300 rounded bg-white" />
-                </div>
-                <div>
-                  <label className="block text-neutral-600 font-medium mb-1">செய்தி / குறிப்பு</label>
-                  <textarea required rows={3} placeholder="செய்தி குறிப்பு விவரம்..." className="w-full p-2 border border-neutral-300 rounded bg-white" />
-                </div>
-                <button type="submit" className="w-full py-2 bg-[#C8102E] text-white font-bold rounded cursor-pointer hover:bg-[#a50d25]">
-                  செய்தியை அனுப்புக
-                </button>
-              </form>
+              ) : (
+                <form onSubmit={(e) => { e.preventDefault(); setContactSent(true); }} className="space-y-3 text-xs">
+                  <div>
+                    <label className="block text-neutral-600 font-medium mb-1">பெயர்</label>
+                    <input required type="text" placeholder="உங்கள் பெயர்" className="w-full p-2 border border-neutral-300 rounded bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-600 font-medium mb-1">மின்னஞ்சல்</label>
+                    <input required type="email" placeholder="email@example.com" className="w-full p-2 border border-neutral-300 rounded bg-white" />
+                  </div>
+                  <div>
+                    <label className="block text-neutral-600 font-medium mb-1">செய்தி / குறிப்பு</label>
+                    <textarea required rows={3} placeholder="செய்தி குறிப்பு விவரம்..." className="w-full p-2 border border-neutral-300 rounded bg-white" />
+                  </div>
+                  <button type="submit" className="w-full py-2 bg-[#C8102E] text-white font-bold rounded cursor-pointer hover:bg-[#a50d25]">
+                    செய்தியை அனுப்புக
+                  </button>
+                </form>
+              )}
             </div>
           </div>
         </div>

@@ -107,7 +107,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
 
   const handleSpeechToggle = () => {
     if (!('speechSynthesis' in window)) {
-      alert('Text-to-speech is not supported in this browser.');
+      console.warn('Text-to-speech is not supported in this browser.');
       return;
     }
 

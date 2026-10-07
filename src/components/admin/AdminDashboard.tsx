@@ -241,29 +241,76 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
     return true;
   });
 
+  const navTabs: {
+    id: TabType;
+    label: string;
+    shortLabel: string;
+    icon: React.ReactNode;
+    badge?: React.ReactNode;
+  }[] = [
+    { id: 'overview', label: 'Dashboard Overview', shortLabel: 'Overview', icon: <LayoutDashboard className="w-4 h-4 shrink-0" /> },
+    {
+      id: 'articles',
+      label: 'Cinema Articles',
+      shortLabel: 'Articles',
+      icon: <FileText className="w-4 h-4 shrink-0" />,
+      badge: pendingArticles > 0 ? (
+        <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-amber-400 text-neutral-900 font-bold">
+          {pendingArticles}
+        </span>
+      ) : undefined
+    },
+    {
+      id: 'trailers',
+      label: 'Videos & Trailers (டிரெய்லர்கள்)',
+      shortLabel: 'Trailers',
+      icon: <Video className="w-4 h-4 shrink-0" />,
+      badge: (
+        <span className="px-1.5 py-0.2 rounded-full text-[10px] font-mono font-bold bg-neutral-200 text-neutral-800">
+          {localTrailers.length}
+        </span>
+      )
+    },
+    { id: 'importer', label: 'URL Scraper & Importer', shortLabel: 'Scraper / Importer', icon: <Globe className="w-4 h-4 shrink-0" /> },
+    { id: 'breaking', label: 'Breaking News Ticker', shortLabel: 'Breaking News', icon: <Flame className="w-4 h-4 shrink-0" /> },
+    { id: 'media', label: 'Poster & Media Library', shortLabel: 'Media Library', icon: <ImageIcon className="w-4 h-4 shrink-0" /> },
+    { id: 'categories', label: 'Cinema Categories', shortLabel: 'Categories', icon: <Layers className="w-4 h-4 shrink-0" /> },
+    { id: 'users', label: 'Staff & Roles (RBAC)', shortLabel: 'Staff & Roles', icon: <Users className="w-4 h-4 shrink-0" /> },
+    { id: 'livetv', label: 'Live TV Broadcast', shortLabel: 'Live TV', icon: <Tv className="w-4 h-4 shrink-0" /> },
+    { id: 'ads', label: 'Movie Promos & Ads', shortLabel: 'Ads & Promos', icon: <DollarSign className="w-4 h-4 shrink-0" /> },
+    { id: 'settings', label: 'Portal Settings & Logo', shortLabel: 'Settings', icon: <Settings className="w-4 h-4 shrink-0" /> },
+  ];
+
+  const handleSelectTab = (tabId: TabType) => {
+    setActiveTab(tabId);
+    setIsCreatingArticle(false);
+    setEditingArticle(null);
+  };
+
   return (
-    <div className="min-h-screen bg-neutral-100 flex flex-col font-sans">
-      {/* Top Admin Header Bar in English */}
-      <header className="bg-neutral-900 text-white px-4 sm:px-6 py-3 border-b border-neutral-800 flex items-center justify-between sticky top-0 z-30 shadow-md">
-        <div className="flex items-center gap-4">
+    <div className="min-h-screen bg-neutral-100 flex flex-col font-sans w-full max-w-full min-w-0 overflow-x-hidden">
+      {/* Top Admin Header Bar */}
+      <header className="bg-neutral-900 text-white px-3 sm:px-6 py-2.5 sm:py-3 border-b border-neutral-800 flex items-center justify-between sticky top-0 z-30 shadow-md">
+        <div className="flex items-center gap-2 sm:gap-4 min-w-0">
           <button
             onClick={onGoHome}
-            className="flex items-center gap-1.5 text-xs font-semibold text-neutral-300 hover:text-white transition-colors cursor-pointer"
+            className="flex items-center gap-1 sm:gap-1.5 text-xs font-semibold text-neutral-300 hover:text-white transition-colors cursor-pointer shrink-0"
           >
             <ArrowLeft className="w-4 h-4" />
-            <span>View Website</span>
+            <span className="hidden xs:inline">Website</span>
           </button>
-          <div className="h-4 w-px bg-neutral-700"></div>
-          <div className="flex items-center gap-2">
-            <span className="w-2.5 h-2.5 rounded-full bg-[#C8102E]"></span>
-            <span className="text-sm font-bold tracking-wide font-display text-white">
-              CHUDAR MEDIA CINEMA · ADMIN BACKEND
+          <div className="h-4 w-px bg-neutral-700 shrink-0"></div>
+          <div className="flex items-center gap-1.5 sm:gap-2 min-w-0 truncate">
+            <span className="w-2.5 h-2.5 rounded-full bg-[#C8102E] shrink-0"></span>
+            <span className="text-xs sm:text-sm font-bold tracking-wide font-display text-white truncate">
+              <span className="hidden md:inline">CHUDAR MEDIA CINEMA · ADMIN BACKEND</span>
+              <span className="md:hidden">CHUDAR ADMIN</span>
             </span>
           </div>
         </div>
 
         {/* Current User & Logout */}
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0">
           <div className="flex items-center gap-2 text-xs">
             <img
               src={currentUser.avatar}
@@ -290,210 +337,96 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({
       </header>
 
       {/* Main Admin Grid */}
-      <div className="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
-        {/* Sidebar Nav (3 Cols) */}
-        <nav className="lg:col-span-3 bg-white border border-neutral-200 rounded-sm p-3 shadow-xs space-y-1">
+      <div className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-6 flex flex-col lg:grid lg:grid-cols-12 gap-4 sm:gap-6 items-start min-w-0 max-w-full">
+        {/* Mobile Horizontal Carousel Navigation (< lg) */}
+        <div className="lg:hidden w-full bg-white border border-neutral-200 rounded-sm p-2.5 shadow-xs">
+          <div className="flex items-center justify-between pb-1.5 mb-1.5 border-b border-neutral-100 text-[11px]">
+            <span className="font-bold text-neutral-600">பிரிவுகள் (Admin Tabs):</span>
+            <span className="text-[#C8102E] font-black uppercase tracking-wide">
+              {navTabs.find((t) => t.id === activeTab)?.shortLabel || activeTab}
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+            {navTabs.map((tab) => {
+              const isActive = (activeTab === tab.id || (tab.id === 'articles' && (isCreatingArticle || !!editingArticle)));
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => handleSelectTab(tab.id)}
+                  className={`px-3 py-1.5 rounded-full text-xs font-bold whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 cursor-pointer shadow-2xs ${
+                    isActive
+                      ? 'bg-[#C8102E] text-white shadow-xs'
+                      : 'bg-neutral-100 text-neutral-700 hover:bg-neutral-200 hover:text-neutral-900 border border-neutral-200'
+                  }`}
+                >
+                  {tab.icon}
+                  <span>{tab.shortLabel}</span>
+                  {tab.badge && (
+                    <span className="ml-0.5">
+                      {tab.badge}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop Sidebar Nav (3 Cols) */}
+        <nav className="hidden lg:block lg:col-span-3 bg-white border border-neutral-200 rounded-sm p-3 shadow-xs space-y-1 w-full">
           <div className="px-3 py-1.5 text-[10px] font-bold text-neutral-400 uppercase tracking-wider">
             Content Management
           </div>
 
-          <button
-            onClick={() => {
-              setActiveTab('overview');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'overview' && !isCreatingArticle && !editingArticle
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <LayoutDashboard className="w-4 h-4" />
-            <span>Dashboard Overview</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('articles');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center justify-between cursor-pointer ${
-              activeTab === 'articles' || isCreatingArticle || editingArticle
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <FileText className="w-4 h-4" />
-              <span>Cinema Articles</span>
-            </div>
-            {pendingArticles > 0 && (
-              <span className="px-1.5 py-0.5 rounded-full text-[10px] bg-amber-400 text-neutral-900 font-bold">
-                {pendingArticles}
-              </span>
-            )}
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('trailers');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center justify-between cursor-pointer ${
-              activeTab === 'trailers'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <div className="flex items-center gap-2.5">
-              <Video className="w-4 h-4" />
-              <span>Videos & Trailers (டிரெய்லர்கள்)</span>
-            </div>
-            <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-mono font-bold ${
-              activeTab === 'trailers' ? 'bg-white/20 text-white' : 'bg-neutral-200 text-neutral-800'
-            }`}>
-              {localTrailers.length}
-            </span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('importer');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'importer'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Globe className="w-4 h-4" />
-            <span>URL Scraper & Importer</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('breaking');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'breaking'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Flame className="w-4 h-4" />
-            <span>Breaking News Ticker</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('media');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'media'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <ImageIcon className="w-4 h-4" />
-            <span>Poster & Media Library</span>
-          </button>
+          {navTabs.slice(0, 6).map((tab) => {
+            const isActive = activeTab === tab.id || (tab.id === 'articles' && (isCreatingArticle || !!editingArticle));
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleSelectTab(tab.id)}
+                className={`w-full px-3 py-2 rounded text-xs font-bold text-left transition-colors flex items-center justify-between cursor-pointer ${
+                  isActive
+                    ? 'bg-[#C8102E] text-white'
+                    : 'text-neutral-700 hover:bg-neutral-100'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </div>
+                {tab.badge}
+              </button>
+            );
+          })}
 
           <div className="pt-3 px-3 pb-1 text-[10px] font-bold text-neutral-400 uppercase tracking-wider border-t border-neutral-100">
             Publishing Controls
           </div>
 
-          <button
-            onClick={() => {
-              setActiveTab('categories');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'categories'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Layers className="w-4 h-4" />
-            <span>Cinema Categories</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('users');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'users'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Users className="w-4 h-4" />
-            <span>Staff & Roles (RBAC)</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('livetv');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'livetv'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Tv className="w-4 h-4" />
-            <span>Live TV Broadcast</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('ads');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'ads'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <DollarSign className="w-4 h-4" />
-            <span>Movie Promos & Ads</span>
-          </button>
-
-          <button
-            onClick={() => {
-              setActiveTab('settings');
-              setIsCreatingArticle(false);
-              setEditingArticle(null);
-            }}
-            className={`w-full px-3 py-2.5 rounded text-xs font-bold text-left transition-colors flex items-center gap-2.5 cursor-pointer ${
-              activeTab === 'settings'
-                ? 'bg-[#C8102E] text-white'
-                : 'text-neutral-700 hover:bg-neutral-100'
-            }`}
-          >
-            <Settings className="w-4 h-4" />
-            <span>Portal Settings & Logo</span>
-          </button>
+          {navTabs.slice(6).map((tab) => {
+            const isActive = activeTab === tab.id;
+            return (
+              <button
+                key={tab.id}
+                onClick={() => handleSelectTab(tab.id)}
+                className={`w-full px-3 py-2 rounded text-xs font-bold text-left transition-colors flex items-center justify-between cursor-pointer ${
+                  isActive
+                    ? 'bg-[#C8102E] text-white'
+                    : 'text-neutral-700 hover:bg-neutral-100'
+                }`}
+              >
+                <div className="flex items-center gap-2.5">
+                  {tab.icon}
+                  <span>{tab.label}</span>
+                </div>
+                {tab.badge}
+              </button>
+            );
+          })}
         </nav>
 
         {/* Content View (9 Cols) */}
-        <main className="lg:col-span-9">
+        <main className="lg:col-span-9 w-full min-w-0 max-w-full overflow-hidden">
           {/* Toast Notification */}
           {toastNotification && (
             <div
