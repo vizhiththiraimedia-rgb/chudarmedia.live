@@ -137,14 +137,20 @@ export const Header: React.FC<HeaderProps> = ({
       </div>
 
       {/* Main Brand & Action Header */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
-        {/* Brand Logo */}
-        <div className="cursor-pointer" onClick={onGoHome}>
-          <Logo showTagline={true} customLogoUrl={siteSettings.logoUrl} />
+      <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 sm:py-3 flex items-center justify-between gap-2">
+        {/* Brand Logo & Name */}
+        <div className="cursor-pointer min-w-0 shrink flex items-center" onClick={onGoHome}>
+          <Logo
+            showTagline={true}
+            customLogoUrl={siteSettings.logoUrl}
+            brandName={siteSettings.brandName}
+            brandNameTa={siteSettings.brandNameTa}
+            tagline={siteSettings.tagline}
+          />
         </div>
 
         {/* Center / Right Functional Actions */}
-        <div className="flex items-center gap-2 sm:gap-3">
+        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
           {/* Live TV Button with Pulsing Dot */}
           <button
             onClick={onOpenLiveTv}

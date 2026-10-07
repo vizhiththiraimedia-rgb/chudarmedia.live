@@ -31,7 +31,15 @@ export const Footer: React.FC<FooterProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-12 gap-8 pb-10 border-b border-neutral-800">
           {/* Brand Info (5 Cols) */}
           <div className="lg:col-span-5 flex flex-col gap-4">
-            <Logo variant="dark" size="lg" showTagline={true} customLogoUrl={siteSettings.logoUrl} />
+            <Logo
+              variant="dark"
+              size="lg"
+              showTagline={true}
+              customLogoUrl={siteSettings.logoUrl}
+              brandName={siteSettings.brandName}
+              brandNameTa={siteSettings.brandNameTa}
+              tagline={siteSettings.tagline}
+            />
             <p className="text-xs sm:text-sm text-neutral-400 leading-relaxed max-w-md">
               சுடர் மீடியா சினிமா (CHUDAR MEDIA CINEMA) – தமிழ் சினிமா, இலங்கை சினிமா, சிங்கள சினிமா, இந்திய மற்றும் உலகத் திரைப்படங்களுக்கான சர்வதேச தரத்திலான முன்னணி டிஜிட்டல் பொழுதுபோக்குத் தளம்.
             </p>

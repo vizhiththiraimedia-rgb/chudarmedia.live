@@ -6,6 +6,9 @@ interface LogoProps {
   variant?: 'light' | 'dark';
   showTagline?: boolean;
   customLogoUrl?: string;
+  brandName?: string;
+  brandNameTa?: string;
+  tagline?: string;
 }
 
 export const Logo: React.FC<LogoProps> = ({
@@ -13,29 +16,62 @@ export const Logo: React.FC<LogoProps> = ({
   size = 'md',
   variant = 'light',
   showTagline = false,
-  customLogoUrl
+  customLogoUrl,
+  brandName = 'CHUDAR MEDIA',
+  brandNameTa = 'சுடர் மீடியா',
+  tagline = 'சினிமாவின் ஒளி... ரசிகர்களின் குரல்!'
 }) => {
   const iconSize = size === 'sm' ? 28 : size === 'lg' ? 44 : 36;
-  const textSize = size === 'sm' ? 'text-lg' : size === 'lg' ? 'text-2xl sm:text-3xl' : 'text-xl sm:text-2xl';
-  const subTextSize = size === 'sm' ? 'text-[9px]' : size === 'lg' ? 'text-xs' : 'text-[10px]';
+  const textSize = size === 'sm' ? 'text-sm sm:text-base' : size === 'lg' ? 'text-xl sm:text-2xl lg:text-3xl' : 'text-base sm:text-xl lg:text-2xl';
+  const subTextSize = size === 'sm' ? 'text-[9px] sm:text-[10px]' : size === 'lg' ? 'text-xs' : 'text-[10px] sm:text-xs';
 
   const textColor = variant === 'dark' ? 'text-white' : 'text-[#111111]';
   const taglineColor = variant === 'dark' ? 'text-neutral-400' : 'text-[#666666]';
 
+  // Format brand words (e.g., "CHUDAR MEDIA" -> "CHUDAR" + "MEDIA")
+  const primaryBrand = (brandName || 'CHUDAR MEDIA').trim();
+  const words = primaryBrand.split(/\s+/);
+  const brandFirst = words.length > 1 ? words.slice(0, -1).join(' ') : words[0];
+  const brandLast = words.length > 1 ? words[words.length - 1] : '';
+
   // If user provided custom logo URL
   if (customLogoUrl && customLogoUrl.trim() !== '') {
     return (
-      <div className={`flex items-center gap-2 select-none ${className}`}>
+      <div className={`flex items-center gap-2 sm:gap-2.5 select-none min-w-0 ${className}`}>
         <img
           src={customLogoUrl}
-          alt="Chudar Media Logo"
+          alt={`${primaryBrand} Logo`}
           referrerPolicy="no-referrer"
-          className="h-9 sm:h-11 object-contain"
+          className="h-8 sm:h-10 md:h-11 shrink-0 object-contain max-w-[110px] sm:max-w-[170px]"
         />
         {showTagline && (
-          <div className="hidden sm:flex flex-col text-left pl-2 border-l border-neutral-300">
-            <span className="text-[10px] font-bold text-[#C8102E]">சுடர் சினிமா</span>
-            <span className={`text-[9px] ${taglineColor}`}>சினிமாவின் ஒளி... ரசிகர்களின் குரல்!</span>
+          <div className="flex flex-col text-left justify-center leading-none min-w-0">
+            {/* Top English Brand Name - Always visible on mobile & desktop */}
+            <div className="flex items-baseline gap-1 truncate">
+              <span className={`font-extrabold tracking-tight font-display text-sm sm:text-base md:text-lg ${textColor}`}>
+                {brandFirst}
+              </span>
+              {brandLast && (
+                <span className="font-black tracking-wide text-xs sm:text-sm md:text-base text-[#C8102E]">
+                  {brandLast}
+                </span>
+              )}
+            </div>
+
+            {/* Tamil Brand Sub-name & Tagline */}
+            <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1 truncate">
+              <span className="text-[10px] sm:text-xs font-bold text-[#C8102E] truncate">
+                {brandNameTa}
+              </span>
+              {tagline && (
+                <>
+                  <span className="hidden md:inline text-neutral-300 text-[10px]" aria-hidden="true">·</span>
+                  <span className={`hidden md:inline text-[9px] sm:text-[10px] font-medium ${taglineColor} truncate`}>
+                    {tagline}
+                  </span>
+                </>
+              )}
+            </div>
           </div>
         )}
       </div>
@@ -43,7 +79,7 @@ export const Logo: React.FC<LogoProps> = ({
   }
 
   return (
-    <div className={`flex items-center gap-2.5 select-none ${className}`}>
+    <div className={`flex items-center gap-2 sm:gap-2.5 select-none min-w-0 ${className}`}>
       {/* Flame Icon Symbol (சுடர்) */}
       <div className="relative shrink-0 flex items-center justify-center">
         <svg
@@ -71,26 +107,28 @@ export const Logo: React.FC<LogoProps> = ({
       </div>
 
       {/* Brand Typography */}
-      <div className="flex flex-col leading-none">
-        <div className="flex items-baseline gap-1.5">
+      <div className="flex flex-col leading-none min-w-0">
+        <div className="flex items-baseline gap-1 sm:gap-1.5 truncate">
           <span className={`font-extrabold tracking-tight font-display ${textSize} ${textColor}`}>
-            CHUDAR
+            {brandFirst}
           </span>
-          <span className={`font-black tracking-wider ${textSize} text-[#C8102E]`}>
-            CINEMA
-          </span>
+          {brandLast && (
+            <span className={`font-black tracking-wider ${textSize} text-[#C8102E]`}>
+              {brandLast}
+            </span>
+          )}
         </div>
         
         {/* Tamil Brand Sub-kicker */}
-        <div className="flex items-center gap-1.5 mt-0.5">
-          <span className={`font-semibold tracking-wide ${subTextSize} text-[#C8102E]`}>
-            சுடர் சினிமா
+        <div className="flex items-center gap-1 sm:gap-1.5 mt-0.5 sm:mt-1 truncate">
+          <span className={`font-bold tracking-wide ${subTextSize} text-[#C8102E] truncate`}>
+            {brandNameTa}
           </span>
           {showTagline && (
             <>
-              <span className="text-neutral-300 text-[10px]" aria-hidden="true">·</span>
-              <span className={`font-medium ${subTextSize} ${taglineColor} hidden sm:inline`}>
-                சினிமாவின் ஒளி... ரசிகர்களின் குரல்!
+              <span className="hidden md:inline text-neutral-300 text-[10px]" aria-hidden="true">·</span>
+              <span className={`hidden md:inline font-medium ${subTextSize} ${taglineColor} truncate`}>
+                {tagline}
               </span>
             </>
           )}
