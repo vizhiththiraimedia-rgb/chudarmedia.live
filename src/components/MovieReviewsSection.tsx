@@ -21,11 +21,11 @@ export const MovieReviewsSection: React.FC<MovieReviewsSectionProps> = ({
   if (reviewArticles.length === 0) return null;
 
   return (
-    <section className="mb-10 bg-neutral-900 text-white p-5 sm:p-7 rounded-sm border-t-4 border-[#C8102E]">
-      <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-800">
-        <div className="flex items-center gap-2">
-          <Award className="w-5 h-5 text-amber-400" />
-          <h2 className="text-lg sm:text-xl font-black font-serif-tamil tracking-tight text-white flex items-center gap-2">
+    <section className="mb-10 bg-neutral-900 text-white p-4 sm:p-7 rounded-sm border-t-4 border-[#C8102E] w-full min-w-0 max-w-full overflow-hidden">
+      <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-800 w-full min-w-0 max-w-full flex-wrap gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <Award className="w-5 h-5 text-amber-400 shrink-0" />
+          <h2 className="text-lg sm:text-xl font-black font-serif-tamil tracking-tight text-white flex items-center gap-2 truncate">
             <span>{language === 'ta' ? 'திரை விமர்சனங்கள் (Movie Reviews)' : 'MOVIE REVIEWS'}</span>
           </h2>
         </div>
@@ -34,7 +34,7 @@ export const MovieReviewsSection: React.FC<MovieReviewsSectionProps> = ({
         </span>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 w-full min-w-0 max-w-full">
         {reviewArticles.slice(0, 4).map((review) => {
           const rating = review.rating || 4.0;
           return (

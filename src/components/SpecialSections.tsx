@@ -53,9 +53,9 @@ export const SpecialSections: React.FC<SpecialSectionsProps> = ({
   ];
 
   return (
-    <section className="my-10 flex flex-col gap-10">
+    <section className="my-10 flex flex-col gap-10 w-full min-w-0 max-w-full overflow-hidden">
       {/* 1. Trailers & Cinema Video Showcases */}
-      <div className="bg-[#111111] text-white p-5 sm:p-7 rounded-sm">
+      <div className="bg-[#111111] text-white p-4 sm:p-7 rounded-sm w-full min-w-0 max-w-full overflow-hidden">
         <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-800">
           <div className="flex items-center gap-2">
             <Video className="w-5 h-5 text-[#C8102E]" />

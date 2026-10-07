@@ -31,12 +31,12 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
   };
 
   return (
-    <section className="mb-10 bg-neutral-50 p-5 sm:p-6 rounded border border-neutral-200">
+    <section className="mb-10 bg-neutral-50 p-4 sm:p-6 rounded border border-neutral-200 w-full min-w-0 max-w-full overflow-hidden">
       {/* Title */}
-      <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-200">
-        <div className="flex items-center gap-2">
-          <TrendingUp className="w-5 h-5 text-[#C8102E]" />
-          <h2 className="text-lg sm:text-xl font-bold font-serif-tamil tracking-tight text-[#111111]">
+      <div className="flex items-center justify-between pb-3 mb-5 border-b border-neutral-200 w-full min-w-0 max-w-full flex-wrap gap-2">
+        <div className="flex items-center gap-2 min-w-0">
+          <TrendingUp className="w-5 h-5 text-[#C8102E] shrink-0" />
+          <h2 className="text-lg sm:text-xl font-bold font-serif-tamil tracking-tight text-[#111111] truncate">
             {language === 'ta' ? 'பிரபலமான சினிமா செய்திகள் & வைரல்' : 'TRENDING & VIRAL CINEMA'}
           </h2>
         </div>
@@ -46,7 +46,7 @@ export const TrendingSection: React.FC<TrendingSectionProps> = ({
       </div>
 
       {/* 5-Column Grid with Ranking Indices */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3.5 sm:gap-4 w-full min-w-0 max-w-full">
         {trendingArticles.map((article, idx) => {
           const rank = `0${idx + 1}`;
           return (

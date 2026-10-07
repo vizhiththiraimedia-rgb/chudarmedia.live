@@ -71,7 +71,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   return (
-    <aside className="w-full lg:w-80 flex flex-col gap-5">
+    <aside className="w-full lg:w-80 flex flex-col gap-5 min-w-0 max-w-full overflow-hidden">
       {/* 1. Movie Poster Banner Ads (Small boxes for movie promos) */}
       {sidebarAd && (
         <div className="ad-banner bg-white border border-neutral-200 rounded-sm p-2 text-center shadow-xs">

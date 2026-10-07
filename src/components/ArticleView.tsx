@@ -163,7 +163,7 @@ export const ArticleView: React.FC<ArticleViewProps> = ({
       : 'text-sm sm:text-base leading-relaxed';
 
   return (
-    <div className="article-container max-w-4xl mx-auto px-4 sm:px-6 py-6">
+    <div className="article-container max-w-4xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 w-full min-w-0 overflow-hidden">
       {/* Reading Progress Indicator Bar (Fixed at very top) */}
       <div
         className="fixed top-0 left-0 h-1 bg-[#C8102E] z-50 transition-all duration-150"

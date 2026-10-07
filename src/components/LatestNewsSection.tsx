@@ -50,31 +50,31 @@ export const LatestNewsSection: React.FC<LatestNewsSectionProps> = ({
   };
 
   return (
-    <section className="flex-1">
+    <section className="flex-1 w-full min-w-0 max-w-full overflow-hidden">
       {/* Section Header & Interactive Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 mb-6 border-b-2 border-neutral-900">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-6 bg-[#C8102E] inline-block"></span>
-          <h2 className="text-xl sm:text-2xl font-black font-serif-tamil tracking-tight text-[#111111]">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 sm:gap-3 pb-3 mb-5 sm:mb-6 border-b-2 border-neutral-900 w-full min-w-0 max-w-full">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2.5 h-6 bg-[#C8102E] inline-block shrink-0"></span>
+          <h2 className="text-lg sm:text-2xl font-black font-serif-tamil tracking-tight text-[#111111] truncate">
             {language === 'ta' ? 'சமீபத்திய சினிமா செய்திகள்' : 'LATEST CINEMA STORIES'}
           </h2>
-          <span className="text-xs font-mono text-neutral-400">
+          <span className="text-xs font-mono text-neutral-400 shrink-0">
             ({filteredArticles.length})
           </span>
         </div>
 
-        {/* Filter Pills (Interactive button elements per Frontend Design rules) */}
-        <div className="flex items-center gap-1 overflow-x-auto scrollbar-none py-1">
-          {categories.slice(0, 6).map((cat) => {
+        {/* Filter Pills with smooth horizontal scrolling on mobile */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1 w-full sm:w-auto min-w-0 max-w-full">
+          {categories.slice(0, 8).map((cat) => {
             const isActive = selectedCategoryId === cat.id;
             return (
               <button
                 key={cat.id}
                 onClick={() => onSelectCategory(cat.id)}
-                className={`px-2.5 py-1 text-xs font-medium rounded-sm whitespace-nowrap transition-colors cursor-pointer ${
+                className={`px-3 py-1 text-xs font-medium rounded-full whitespace-nowrap shrink-0 transition-colors cursor-pointer ${
                   isActive
                     ? 'bg-[#111111] text-white'
-                    : 'bg-neutral-100 text-neutral-600 hover:text-neutral-900 hover:bg-neutral-200'
+                    : 'bg-neutral-100 text-neutral-700 hover:text-neutral-900 hover:bg-neutral-200'
                 }`}
               >
                 {language === 'ta' ? cat.nameTa : cat.nameEn}
@@ -84,13 +84,13 @@ export const LatestNewsSection: React.FC<LatestNewsSectionProps> = ({
         </div>
       </div>
 
-      {/* Articles Grid (2 columns on tablet/desktop) */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Articles Grid (1 col on mobile, 2 cols on tablet/desktop) */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 w-full min-w-0 max-w-full">
         {visibleArticles.map((article) => (
           <article
             key={article.id}
             onClick={() => onSelectArticle(article)}
-            className="group cursor-pointer bg-white border border-neutral-200 hover:border-neutral-300 transition-all rounded-sm flex flex-col overflow-hidden"
+            className="group cursor-pointer bg-white border border-neutral-200 hover:border-neutral-300 transition-all rounded-xs flex flex-col overflow-hidden w-full min-w-0 max-w-full shadow-2xs"
           >
             {/* Thumbnail */}
             <div className="relative aspect-16/10 w-full overflow-hidden bg-neutral-900">
@@ -108,25 +108,25 @@ export const LatestNewsSection: React.FC<LatestNewsSectionProps> = ({
             </div>
 
             {/* Article Info */}
-            <div className="p-4 flex flex-col flex-1 justify-between">
-              <div>
+            <div className="p-3.5 sm:p-4 flex flex-col flex-1 justify-between min-w-0">
+              <div className="min-w-0">
                 {/* Clean unboxed metadata */}
-                <div className="flex items-center gap-2 text-xs text-neutral-500 mb-2">
-                  <span className="font-semibold text-neutral-700">{article.authorName}</span>
+                <div className="flex items-center gap-2 text-xs text-neutral-500 mb-1.5 flex-wrap">
+                  <span className="font-semibold text-neutral-700 truncate">{article.authorName}</span>
                   <span aria-hidden="true">·</span>
-                  <span className="flex items-center gap-1 font-mono text-[11px]">
+                  <span className="flex items-center gap-1 font-mono text-[11px] shrink-0">
                     <Clock className="w-3 h-3 text-neutral-400" />
                     {formatTimestamp(article.publishedAt)}
                   </span>
                 </div>
 
                 {/* Headline */}
-                <h3 className="text-base sm:text-lg font-bold font-serif-tamil text-[#111111] group-hover:text-[#C8102E] transition-colors leading-snug line-clamp-2 mb-2">
+                <h3 className="text-base sm:text-lg font-bold font-serif-tamil text-[#111111] group-hover:text-[#C8102E] transition-colors leading-snug line-clamp-2 mb-2 break-words">
                   {language === 'ta' ? article.title : (article.titleEn || article.title)}
                 </h3>
 
                 {/* Summary */}
-                <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2 leading-relaxed mb-4">
+                <p className="text-xs sm:text-sm text-neutral-600 line-clamp-2 leading-relaxed mb-4 break-words">
                   {language === 'ta' ? article.summary : (article.summaryEn || article.summary)}
                 </p>
               </div>

@@ -336,7 +336,7 @@ export default function App() {
   const topAd = advertisements.find((a) => a.active && a.placement === 'home_top');
 
   return (
-    <div className={`min-h-screen flex flex-col bg-white text-[#202124] ${viewMode !== 'admin' ? 'pb-16 md:pb-0' : ''}`}>
+    <div className={`min-h-screen flex flex-col bg-white text-[#202124] w-full max-w-full min-w-0 overflow-x-hidden ${viewMode !== 'admin' ? 'pb-16 md:pb-0' : ''}`}>
       {/* SEO & Structured Data Controller */}
       <SEOHead
         currentArticle={currentArticle || undefined}
@@ -391,7 +391,7 @@ export default function App() {
 
           {/* Top Leaderboard Movie Banner */}
           {topAd && viewMode === 'home' && (
-            <div className="ad-banner max-w-7xl mx-auto px-4 sm:px-6 pt-4 pb-2 w-full text-center">
+            <div className="ad-banner max-w-7xl mx-auto px-3.5 sm:px-6 pt-4 pb-2 w-full min-w-0 max-w-full text-center overflow-hidden">
               <span className="text-[9px] uppercase tracking-wider text-neutral-400 font-bold block mb-1">
                 திரைப்பட விளம்பரம் (SPONSORED LEADERBOARD)
               </span>
@@ -412,9 +412,9 @@ export default function App() {
           )}
 
           {/* Body Content Router */}
-          <main className="flex-1">
+          <main className="flex-1 w-full min-w-0 max-w-full overflow-hidden">
             {viewMode === 'home' && (
-              <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+              <div className="max-w-7xl mx-auto px-3.5 sm:px-6 py-4 sm:py-6 w-full min-w-0 max-w-full overflow-hidden">
                 {/* 1. Hero Section (Compact Cinema Slider) */}
                 {activeCategoryId === 'all' && (
                   <HeroSection
@@ -445,7 +445,7 @@ export default function App() {
                 )}
 
                 {/* 4. Main Split Grid: Latest News (Left) + Sidebar (Right with movie boxes) */}
-                <div className="flex flex-col lg:flex-row gap-8 items-start">
+                <div className="flex flex-col lg:flex-row gap-6 lg:gap-8 items-start w-full min-w-0 max-w-full overflow-hidden">
                   <LatestNewsSection
                     articles={articles}
                     categories={categories}

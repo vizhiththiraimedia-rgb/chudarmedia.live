@@ -51,23 +51,23 @@ export const HeroSection: React.FC<HeroSectionProps> = ({
   };
 
   return (
-    <section className="mb-8">
+    <section className="mb-8 w-full min-w-0 max-w-full overflow-hidden">
       {/* Cinema Section Bar */}
-      <div className="flex items-center justify-between pb-2 mb-4 border-b-2 border-neutral-900">
-        <div className="flex items-center gap-2">
-          <span className="w-2.5 h-5 bg-[#C8102E] inline-block"></span>
-          <h2 className="text-lg sm:text-xl font-black font-serif-tamil tracking-tight text-[#111111] flex items-center gap-2">
-            <Film className="w-5 h-5 text-[#C8102E]" />
-            <span>{language === 'ta' ? 'முதன்மைத் திரைச் செய்திகள்' : 'FEATURED CINEMA SPOTLIGHT'}</span>
+      <div className="flex items-center justify-between pb-2 mb-4 border-b-2 border-neutral-900 w-full min-w-0 max-w-full">
+        <div className="flex items-center gap-2 min-w-0">
+          <span className="w-2.5 h-5 bg-[#C8102E] inline-block shrink-0"></span>
+          <h2 className="text-lg sm:text-xl font-black font-serif-tamil tracking-tight text-[#111111] flex items-center gap-2 truncate">
+            <Film className="w-5 h-5 text-[#C8102E] shrink-0" />
+            <span className="truncate">{language === 'ta' ? 'முதன்மைத் திரைச் செய்திகள்' : 'FEATURED CINEMA SPOTLIGHT'}</span>
           </h2>
         </div>
-        <div className="text-xs text-neutral-500 font-medium hidden sm:block">
+        <div className="text-xs text-neutral-500 font-medium hidden sm:block shrink-0">
           {language === 'ta' ? 'கோலிவுட் · ஈழத்து சினிமா · ஹாலிவுட்' : 'Kollywood · Eelam · Hollywood'}
         </div>
       </div>
 
       {/* Grid: 8 Cols (Compact Slider) + 4 Cols (Companion Cards) */}
-      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-5 lg:gap-6 items-start w-full min-w-0 max-w-full">
         {/* Left Slider (8 Cols) - Compact & Sized Appropriately */}
         <div
           onClick={() => onSelectArticle(currentStory)}
