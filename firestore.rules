@@ -1,0 +1,39 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Articles: Public can read all published news; admins can create, update, delete
+    match /articles/{articleId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Categories: Public can read; allow write
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Breaking News: Public can read; allow write
+    match /breaking_news/{newsId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Comments: Public can read and submit comments
+    match /comments/{commentId} {
+      allow read: if true;
+      allow create, update, delete: if true;
+    }
+
+    // Site Settings: Public can read; allow write
+    match /site_settings/{settingId} {
+      allow read: if true;
+      allow write: if true;
+    }
+
+    // Connection test document
+    match /test/{testId} {
+      allow read, write: if true;
+    }
+  }
+}

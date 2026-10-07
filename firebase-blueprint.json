@@ -1,0 +1,98 @@
+{
+  "entities": {
+    "Article": {
+      "title": "Article",
+      "description": "Cinema news article publication",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Unique identifier" },
+        "title": { "type": "string", "description": "Tamil headline of article" },
+        "subtitle": { "type": "string", "description": "Article subtitle" },
+        "summary": { "type": "string", "description": "Short summary" },
+        "content": { "type": "string", "description": "HTML or full text content" },
+        "category": { "type": "string", "description": "Category slug" },
+        "imageUrl": { "type": "string", "description": "Featured high-res image URL" },
+        "publishedAt": { "type": "string", "description": "ISO timestamp" },
+        "author": { "type": "string", "description": "Author or reporter name" },
+        "slug": { "type": "string", "description": "SEO URL slug" },
+        "viewCount": { "type": "number", "description": "Total view impressions" },
+        "featured": { "type": "boolean", "description": "Is featured story" },
+        "trending": { "type": "boolean", "description": "Is trending story" },
+        "breaking": { "type": "boolean", "description": "Is breaking story" }
+      },
+      "required": ["id", "title", "content", "category"]
+    },
+    "Category": {
+      "title": "Category",
+      "description": "Cinema portal category",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Category ID" },
+        "name": { "type": "string", "description": "Tamil name" },
+        "nameTa": { "type": "string", "description": "Tamil display name" },
+        "slug": { "type": "string", "description": "Slug" }
+      },
+      "required": ["id", "name", "slug"]
+    },
+    "BreakingNews": {
+      "title": "BreakingNews",
+      "description": "Breaking news ticker headline",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Ticker item ID" },
+        "title": { "type": "string", "description": "Ticker text" },
+        "active": { "type": "boolean", "description": "Active status" },
+        "timestamp": { "type": "string", "description": "ISO timestamp" }
+      },
+      "required": ["id", "title"]
+    },
+    "Comment": {
+      "title": "Comment",
+      "description": "Reader comment on an article",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Comment ID" },
+        "articleId": { "type": "string", "description": "Associated article ID" },
+        "userName": { "type": "string", "description": "Commenter name" },
+        "content": { "type": "string", "description": "Comment text" },
+        "createdAt": { "type": "string", "description": "ISO timestamp" },
+        "likes": { "type": "number", "description": "Like count" }
+      },
+      "required": ["id", "articleId", "userName", "content"]
+    },
+    "SiteSettings": {
+      "title": "SiteSettings",
+      "description": "Portal global configuration",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string", "description": "Config ID" },
+        "siteName": { "type": "string", "description": "Website title" },
+        "siteDescription": { "type": "string", "description": "Website description" },
+        "logoUrl": { "type": "string", "description": "Logo URL" }
+      },
+      "required": ["id"]
+    }
+  },
+  "firestore": {
+    "/articles/{articleId}": {
+      "schema": "Article",
+      "description": "News articles collection accessible to readers and manageable by editorial admins"
+    },
+    "/categories/{categoryId}": {
+      "schema": "Category",
+      "description": "Categories for cinema news"
+    },
+    "/breaking_news/{newsId}": {
+      "schema": "BreakingNews",
+      "description": "Live breaking news ticker items"
+    },
+    "/comments/{commentId}": {
+      "schema": "Comment",
+      "description": "Article reader comments"
+    },
+    "/site_settings/{settingId}": {
+      "schema": "SiteSettings",
+      "description": "Site global preferences"
+    }
+  }
+}

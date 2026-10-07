@@ -25,6 +25,14 @@ import {
   INITIAL_MEDIA_ITEMS,
   INITIAL_VIDEO_TRAILERS
 } from '../data/seedData';
+import { db } from './firebase';
+import {
+  collection,
+  doc,
+  setDoc,
+  deleteDoc,
+  onSnapshot
+} from 'firebase/firestore';
 
 const STORAGE_KEYS = {
   ARTICLES: 'chudar_articles',
@@ -76,6 +84,8 @@ function setItem<T>(key: string, value: T): void {
   }
 }
 
+let isFirestoreSyncActive = false;
+
 export function initializeStore() {
   if (!localStorage.getItem(STORAGE_KEYS.INITIALIZED)) {
     localStorage.setItem(STORAGE_KEYS.ARTICLES, JSON.stringify(INITIAL_ARTICLES));
@@ -93,6 +103,118 @@ export function initializeStore() {
     localStorage.setItem(STORAGE_KEYS.INITIALIZED, 'true');
   } else if (!localStorage.getItem(STORAGE_KEYS.VIDEO_TRAILERS)) {
     localStorage.setItem(STORAGE_KEYS.VIDEO_TRAILERS, JSON.stringify(INITIAL_VIDEO_TRAILERS));
+  }
+
+  // Setup Real-time Firestore Cloud Synchronization
+  if (!isFirestoreSyncActive && typeof window !== 'undefined') {
+    isFirestoreSyncActive = true;
+
+    // 1. Sync Articles collection
+    try {
+      onSnapshot(collection(db, 'articles'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudArticles: Article[] = [];
+          snapshot.forEach((docSnap) => {
+            const data = docSnap.data() as Article;
+            cloudArticles.push(data);
+          });
+          cloudArticles.sort(
+            (a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime()
+          );
+          localStorage.setItem(STORAGE_KEYS.ARTICLES, JSON.stringify(cloudArticles));
+          notify();
+        } else {
+          // If Firestore collection is empty, seed initial articles to Firestore
+          const currentArticles = getItem<Article[]>(STORAGE_KEYS.ARTICLES, INITIAL_ARTICLES);
+          currentArticles.forEach((art) => {
+            setDoc(doc(db, 'articles', art.id), art).catch((e) =>
+              console.warn('Seed article failed:', e)
+            );
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore articles sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore articles setup error:', e);
+    }
+
+    // 2. Sync Breaking News collection
+    try {
+      onSnapshot(collection(db, 'breaking_news'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudBreaking: BreakingNews[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudBreaking.push(docSnap.data() as BreakingNews);
+          });
+          localStorage.setItem(STORAGE_KEYS.BREAKING_NEWS, JSON.stringify(cloudBreaking));
+          notify();
+        } else {
+          const currentBreaking = getItem<BreakingNews[]>(STORAGE_KEYS.BREAKING_NEWS, INITIAL_BREAKING_NEWS);
+          currentBreaking.forEach((b) => {
+            setDoc(doc(db, 'breaking_news', b.id), b).catch(console.error);
+          });
+        }
+      }, (err) => {
+        console.warn('Firestore breaking_news sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore breaking_news setup error:', e);
+    }
+
+    // 3. Sync Categories collection
+    try {
+      onSnapshot(collection(db, 'categories'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudCats: Category[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudCats.push(docSnap.data() as Category);
+          });
+          localStorage.setItem(STORAGE_KEYS.CATEGORIES, JSON.stringify(cloudCats));
+          notify();
+        }
+      }, (err) => {
+        console.warn('Firestore categories sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore categories setup error:', e);
+    }
+
+    // 4. Sync Comments collection
+    try {
+      onSnapshot(collection(db, 'comments'), (snapshot) => {
+        if (!snapshot.empty) {
+          const cloudComments: Comment[] = [];
+          snapshot.forEach((docSnap) => {
+            cloudComments.push(docSnap.data() as Comment);
+          });
+          cloudComments.sort(
+            (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+          );
+          localStorage.setItem(STORAGE_KEYS.COMMENTS, JSON.stringify(cloudComments));
+          notify();
+        }
+      }, (err) => {
+        console.warn('Firestore comments sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore comments setup error:', e);
+    }
+
+    // 5. Sync Site Settings
+    try {
+      onSnapshot(doc(db, 'site_settings', 'global'), (snapshot) => {
+        if (snapshot.exists()) {
+          const remoteSettings = snapshot.data() as SiteSettings;
+          localStorage.setItem(STORAGE_KEYS.SITE_SETTINGS, JSON.stringify(remoteSettings));
+          notify();
+        }
+      }, (err) => {
+        console.warn('Firestore site_settings sync notice:', err.message);
+      });
+    } catch (e) {
+      console.warn('Firestore site_settings setup error:', e);
+    }
   }
 }
 
@@ -157,12 +279,23 @@ export function saveArticle(article: Article): Article {
     articles.unshift(sanitized);
   }
   setItem(STORAGE_KEYS.ARTICLES, articles);
+
+  // Sync to Cloud Firestore
+  setDoc(doc(db, 'articles', sanitized.id), sanitized).catch((err) => {
+    console.warn('Error saving article to Firestore:', err);
+  });
+
   return sanitized;
 }
 
 export function deleteArticle(id: string): void {
   const articles = getArticles().filter((a) => a.id !== id);
   setItem(STORAGE_KEYS.ARTICLES, articles);
+
+  // Sync to Cloud Firestore
+  deleteDoc(doc(db, 'articles', id)).catch((err) => {
+    console.warn('Error deleting article from Firestore:', err);
+  });
 }
 
 export function incrementArticleView(id: string): void {
@@ -171,6 +304,7 @@ export function incrementArticleView(id: string): void {
   if (article) {
     article.viewCount = (article.viewCount || 0) + 1;
     setItem(STORAGE_KEYS.ARTICLES, articles);
+    setDoc(doc(db, 'articles', id), { viewCount: article.viewCount }, { merge: true }).catch(() => {});
   }
 }
 
@@ -188,11 +322,13 @@ export function saveCategory(category: Category): void {
     categories.push(category);
   }
   setItem(STORAGE_KEYS.CATEGORIES, categories);
+  setDoc(doc(db, 'categories', category.id), category).catch(console.warn);
 }
 
 export function deleteCategory(id: string): void {
   const categories = getCategories().filter((c) => c.id !== id);
   setItem(STORAGE_KEYS.CATEGORIES, categories);
+  deleteDoc(doc(db, 'categories', id)).catch(console.warn);
 }
 
 // Breaking News API
@@ -209,11 +345,13 @@ export function saveBreakingNews(item: BreakingNews): void {
     list.unshift(item);
   }
   setItem(STORAGE_KEYS.BREAKING_NEWS, list);
+  setDoc(doc(db, 'breaking_news', item.id), item).catch(console.warn);
 }
 
 export function deleteBreakingNews(id: string): void {
   const list = getBreakingNews().filter((b) => b.id !== id);
   setItem(STORAGE_KEYS.BREAKING_NEWS, list);
+  deleteDoc(doc(db, 'breaking_news', id)).catch(console.warn);
 }
 
 // Comments API
@@ -235,6 +373,7 @@ export function addComment(comment: Omit<Comment, 'id' | 'createdAt' | 'likes'>)
   };
   comments.unshift(newComment);
   setItem(STORAGE_KEYS.COMMENTS, comments);
+  setDoc(doc(db, 'comments', newComment.id), newComment).catch(console.warn);
   return newComment;
 }
 
@@ -244,12 +383,14 @@ export function updateCommentStatus(id: string, status: 'approved' | 'pending' |
   if (comment) {
     comment.status = status;
     setItem(STORAGE_KEYS.COMMENTS, comments);
+    setDoc(doc(db, 'comments', id), { status }, { merge: true }).catch(console.warn);
   }
 }
 
 export function deleteComment(id: string): void {
   const comments = getItem<Comment[]>(STORAGE_KEYS.COMMENTS, INITIAL_COMMENTS).filter((c) => c.id !== id);
   setItem(STORAGE_KEYS.COMMENTS, comments);
+  deleteDoc(doc(db, 'comments', id)).catch(console.warn);
 }
 
 export function likeComment(id: string): void {
@@ -471,6 +612,7 @@ export function getSiteSettings(): SiteSettings {
 
 export function updateSiteSettings(settings: SiteSettings): void {
   setItem(STORAGE_KEYS.SITE_SETTINGS, settings);
+  setDoc(doc(db, 'site_settings', 'global'), settings).catch(console.warn);
 }
 
 // Video Trailers API
